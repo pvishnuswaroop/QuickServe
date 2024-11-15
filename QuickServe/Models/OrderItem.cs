@@ -23,15 +23,6 @@ namespace QuickServe.Models
         // Navigation properties
         public virtual Order? Order { get; set; }  // Many-to-one with Order
         public virtual Menu? Menu { get; set; }  // Many-to-one with Menu
-
-        // Constructor
-        public OrderItem(int orderID, int menuID, int quantity, decimal price)
-        {
-            OrderID = orderID;
-            MenuID = menuID;
-            Quantity = quantity;
-            Price = price;
-        }
     }
 
 }

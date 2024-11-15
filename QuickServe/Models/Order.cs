@@ -15,7 +15,7 @@ namespace QuickServe.Models
         public int RestaurantID { get; set; }  // Foreign Key
 
         [Required]
-        public string OrderStatus { get; set; }
+        public string? OrderStatus { get; set; }
 
         [Required]
         public DateTime OrderDate { get; set; }
@@ -29,17 +29,5 @@ namespace QuickServe.Models
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();  // One-to-many with OrderItem
         public virtual Payment? Payment { get; set; }  // One-to-one with Payment
 
-        // Constructor
-        public Order(int userID, int restaurantID, string orderStatus, DateTime orderDate, decimal totalAmount)
-        {
-            UserID = userID;
-            RestaurantID = restaurantID;
-            OrderStatus = orderStatus;
-            OrderDate = orderDate;
-            TotalAmount = totalAmount;
-        }
     }
-
-
-
 }

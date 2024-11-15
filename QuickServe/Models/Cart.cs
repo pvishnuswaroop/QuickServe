@@ -18,12 +18,6 @@ namespace QuickServe.Models
         public virtual User? User { get; set; }  // Many-to-one with User
         public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();  // One-to-many with CartItem
 
-        // Constructor
-        public Cart(int userID, DateTime creationDate)
-        {
-            UserID = userID;
-            CreationDate = creationDate;
-        }
     }
 
 }

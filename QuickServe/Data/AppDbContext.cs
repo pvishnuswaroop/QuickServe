@@ -38,23 +38,7 @@ namespace QuickServe.Data
                 .HasColumnType("decimal(18,2)");
 
             base.OnModelCreating(modelBuilder);
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                // Build configuration to access connection string in appsettings.json
-                var configBuilder = new ConfigurationBuilder()
-                    .AddJsonFile("appsettings.json")
-                    .Build();
-
-                // Retrieve connection string
-                var connectionString = configBuilder.GetConnectionString("DefaultConnection");
-
-                // Configure DbContext to use SQL Server with the retrieved connection string
-                optionsBuilder.UseSqlServer(connectionString);
-            }
+        
         }
     }
 }

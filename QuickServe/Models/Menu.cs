@@ -12,12 +12,12 @@ namespace QuickServe.Models
         public int RestaurantID { get; set; }  // Foreign Key
 
         [Required]
-        public string ItemName { get; set; }
+        public string? ItemName { get; set; }
 
         public string? Description { get; set; }
 
         [Required]
-        public string Category { get; set; }
+        public string? Category { get; set; }
 
         [Required]
         public decimal Price { get; set; }
@@ -27,25 +27,13 @@ namespace QuickServe.Models
         public string? DietaryInfo { get; set; }
 
         [Required]
-        public string Status { get; set; }
+        public string? Status { get; set; }
 
         // Navigation property
         public virtual Restaurant? Restaurant { get; set; }  // Many-to-one with Restaurant
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();  // One-to-many with OrderItem
         public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();  // One-to-many with CartItem
 
-        // Constructor
-        public Menu(int restaurantID, string itemName, string category, decimal price, string status, string? description = null, string? availabilityTime = null, string? dietaryInfo = null)
-        {
-            RestaurantID = restaurantID;
-            ItemName = itemName;
-            Category = category;
-            Price = price;
-            Status = status;
-            Description = description;
-            AvailabilityTime = availabilityTime;
-            DietaryInfo = dietaryInfo;
-        }
     }
 
 }

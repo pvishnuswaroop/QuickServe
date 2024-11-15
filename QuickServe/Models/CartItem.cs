@@ -20,14 +20,6 @@ namespace QuickServe.Models
         // Navigation properties
         public virtual Cart? Cart { get; set; }  // Many-to-one with Cart
         public virtual Menu? Menu { get; set; }  // Many-to-one with Menu
-
-        // Constructor
-        public CartItem(int cartID, int menuID, int quantity)
-        {
-            CartID = cartID;
-            MenuID = menuID;
-            Quantity = quantity;
-        }
     }
 
 }

@@ -29,16 +29,6 @@ namespace QuickServe.Models
         public virtual Restaurant? Restaurant { get; set; }  // Many-to-one with Restaurant
         public virtual Order? Order { get; set; }  // Many-to-one with Order (nullable)
 
-        // Constructor
-        public Rating(int userID, int restaurantID, int ratingScore, DateTime ratingDate, int? orderID = null, string? reviewText = null)
-        {
-            UserID = userID;
-            RestaurantID = restaurantID;
-            RatingScore = ratingScore;
-            RatingDate = ratingDate;
-            OrderID = orderID;
-            ReviewText = reviewText;
-        }
     }
 
 }
