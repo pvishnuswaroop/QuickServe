@@ -24,6 +24,11 @@ namespace QuickServe.Models
         [Required]
         public DateTime RatingDate { get; set; }
 
+        // Navigation properties
+        public virtual User? User { get; set; }  // Many-to-one with User
+        public virtual Restaurant? Restaurant { get; set; }  // Many-to-one with Restaurant
+        public virtual Order? Order { get; set; }  // Many-to-one with Order (nullable)
+
         // Constructor
         public Rating(int userID, int restaurantID, int ratingScore, DateTime ratingDate, int? orderID = null, string? reviewText = null)
         {
@@ -35,4 +40,5 @@ namespace QuickServe.Models
             ReviewText = reviewText;
         }
     }
+
 }

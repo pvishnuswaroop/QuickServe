@@ -23,6 +23,12 @@ namespace QuickServe.Models
         [Required]
         public decimal TotalAmount { get; set; }
 
+        // Navigation properties
+        public virtual User? User { get; set; }  // Many-to-one with User
+        public virtual Restaurant? Restaurant { get; set; }  // Many-to-one with Restaurant
+        public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();  // One-to-many with OrderItem
+        public virtual Payment? Payment { get; set; }  // One-to-one with Payment
+
         // Constructor
         public Order(int userID, int restaurantID, string orderStatus, DateTime orderDate, decimal totalAmount)
         {
@@ -33,4 +39,7 @@ namespace QuickServe.Models
             TotalAmount = totalAmount;
         }
     }
+
+
+
 }

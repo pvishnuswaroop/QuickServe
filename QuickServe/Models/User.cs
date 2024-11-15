@@ -25,6 +25,11 @@ namespace QuickServe.Models
         [Required]
         public string Password { get; set; }  // Hashed password
 
+        // Navigation property
+        public virtual ICollection<Order> Orders { get; set; } = new List<Order>();  // One-to-many with Order
+        public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();  // One-to-many with Cart
+        public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();  // One-to-many with Rating
+
         // Constructor
         public User(string name, string contactNumber, string email, string address, string password, string? gender = null)
         {

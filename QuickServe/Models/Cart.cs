@@ -14,6 +14,10 @@ namespace QuickServe.Models
         [Required]
         public DateTime CreationDate { get; set; }
 
+        // Navigation property
+        public virtual User? User { get; set; }  // Many-to-one with User
+        public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();  // One-to-many with CartItem
+
         // Constructor
         public Cart(int userID, DateTime creationDate)
         {
@@ -21,4 +25,5 @@ namespace QuickServe.Models
             CreationDate = creationDate;
         }
     }
+
 }

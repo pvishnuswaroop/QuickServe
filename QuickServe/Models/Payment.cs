@@ -20,6 +20,9 @@ namespace QuickServe.Models
         [Required]
         public DateTime PaymentDate { get; set; }
 
+        // Navigation property
+        public virtual Order? Order { get; set; }  // One-to-one with Order
+
         // Constructor
         public Payment(int orderID, decimal amountPaid, string paymentStatus, DateTime paymentDate)
         {
@@ -29,4 +32,5 @@ namespace QuickServe.Models
             PaymentDate = paymentDate;
         }
     }
+
 }

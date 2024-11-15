@@ -29,6 +29,11 @@ namespace QuickServe.Models
         [Required]
         public string Status { get; set; }
 
+        // Navigation property
+        public virtual Restaurant? Restaurant { get; set; }  // Many-to-one with Restaurant
+        public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();  // One-to-many with OrderItem
+        public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();  // One-to-many with CartItem
+
         // Constructor
         public Menu(int restaurantID, string itemName, string category, decimal price, string status, string? description = null, string? availabilityTime = null, string? dietaryInfo = null)
         {
@@ -42,4 +47,5 @@ namespace QuickServe.Models
             DietaryInfo = dietaryInfo;
         }
     }
+
 }

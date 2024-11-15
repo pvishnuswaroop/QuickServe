@@ -17,6 +17,10 @@ namespace QuickServe.Models
         [Required]
         public int Quantity { get; set; }
 
+        // Navigation properties
+        public virtual Cart? Cart { get; set; }  // Many-to-one with Cart
+        public virtual Menu? Menu { get; set; }  // Many-to-one with Menu
+
         // Constructor
         public CartItem(int cartID, int menuID, int quantity)
         {
@@ -25,4 +29,5 @@ namespace QuickServe.Models
             Quantity = quantity;
         }
     }
+
 }

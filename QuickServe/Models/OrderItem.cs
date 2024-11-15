@@ -20,6 +20,10 @@ namespace QuickServe.Models
         [Required]
         public decimal Price { get; set; }
 
+        // Navigation properties
+        public virtual Order? Order { get; set; }  // Many-to-one with Order
+        public virtual Menu? Menu { get; set; }  // Many-to-one with Menu
+
         // Constructor
         public OrderItem(int orderID, int menuID, int quantity, decimal price)
         {
@@ -29,4 +33,5 @@ namespace QuickServe.Models
             Price = price;
         }
     }
+
 }
