@@ -10,6 +10,7 @@ namespace QuickServe.Repositories.Implementations
     {
         private readonly AppDbContext _context;
 
+
         public OrderItemRepository(AppDbContext context)
         {
             _context = context;
