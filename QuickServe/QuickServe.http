@@ -1,0 +1,6 @@
+@QuickServe_HostAddress = http://localhost:5265
+
+GET {{QuickServe_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
