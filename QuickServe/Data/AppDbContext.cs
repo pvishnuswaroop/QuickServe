@@ -65,25 +65,32 @@ namespace QuickServe.Data
             modelBuilder.Entity<OrderItem>()
                 .HasOne(oi => oi.Order)
                 .WithMany(o => o.OrderItems)
-                .HasForeignKey(oi => oi.OrderID);
+                .HasForeignKey(oi => oi.OrderID)
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // Cart ↔ CartItem: One-to-Many relationship
             modelBuilder.Entity<CartItem>()
                 .HasOne(ci => ci.Cart)
                 .WithMany(c => c.CartItems)
-                .HasForeignKey(ci => ci.CartID);
-
-            modelBuilder.Entity<Cart>()
-                .HasMany(c => c.CartItems)
-                .WithOne(ci => ci.Cart)
                 .HasForeignKey(ci => ci.CartID)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade); // Cascade delete for CartItems
+
+            // Set precision for decimal properties
+            modelBuilder.Entity<Menu>()
+                .Property(m => m.Price)
+                .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<Order>()
-                .HasMany(o => o.OrderItems)
-                .WithOne(oi => oi.Order)
-                .HasForeignKey(oi => oi.OrderID)
-                .OnDelete(DeleteBehavior.Cascade);
+                .Property(o => o.TotalAmount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<OrderItem>()
+                .Property(oi => oi.Price)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Payment>()
+                .Property(p => p.AmountPaid)
+                .HasColumnType("decimal(18,2)");
 
             base.OnModelCreating(modelBuilder);
         }

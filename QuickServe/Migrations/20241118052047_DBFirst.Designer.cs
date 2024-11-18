@@ -12,7 +12,7 @@ using QuickServe.Data;
 namespace QuickServe.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241113112942_DBFirst")]
+    [Migration("20241118052047_DBFirst")]
     partial class DBFirst
     {
         /// <inheritdoc />
@@ -41,6 +41,9 @@ namespace QuickServe.Migrations
 
                     b.HasKey("CartID");
 
+                    b.HasIndex("UserID")
+                        .IsUnique();
+
                     b.ToTable("Carts");
                 });
 
@@ -63,6 +66,10 @@ namespace QuickServe.Migrations
 
                     b.HasKey("CartItemID");
 
+                    b.HasIndex("CartID");
+
+                    b.HasIndex("MenuID");
+
                     b.ToTable("CartItems");
                 });
 
@@ -75,21 +82,26 @@ namespace QuickServe.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MenuID"));
 
                     b.Property<string>("AvailabilityTime")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Category")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("DietaryInfo")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("ItemName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
@@ -99,9 +111,12 @@ namespace QuickServe.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("MenuID");
+
+                    b.HasIndex("RestaurantID");
 
                     b.ToTable("Menus");
                 });
@@ -119,7 +134,8 @@ namespace QuickServe.Migrations
 
                     b.Property<string>("OrderStatus")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("RestaurantID")
                         .HasColumnType("int");
@@ -131,6 +147,10 @@ namespace QuickServe.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("OrderID");
+
+                    b.HasIndex("RestaurantID");
+
+                    b.HasIndex("UserID");
 
                     b.ToTable("Orders");
                 });
@@ -157,6 +177,10 @@ namespace QuickServe.Migrations
 
                     b.HasKey("OrderItemID");
 
+                    b.HasIndex("MenuID");
+
+                    b.HasIndex("OrderID");
+
                     b.ToTable("OrderItems");
                 });
 
@@ -177,11 +201,20 @@ namespace QuickServe.Migrations
                     b.Property<DateTime>("PaymentDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("PaymentID");
+
+                    b.HasIndex("OrderID")
+                        .IsUnique();
 
                     b.ToTable("Payments");
                 });
@@ -207,12 +240,19 @@ namespace QuickServe.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ReviewText")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
                     b.HasKey("RatingID");
+
+                    b.HasIndex("OrderID");
+
+                    b.HasIndex("RestaurantID");
+
+                    b.HasIndex("UserID");
 
                     b.ToTable("Ratings");
                 });
@@ -227,15 +267,18 @@ namespace QuickServe.Migrations
 
                     b.Property<string>("ContactNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
 
                     b.Property<string>("Location")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("RestaurantID");
 
@@ -252,30 +295,187 @@ namespace QuickServe.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("ContactNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("Gender")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("UserID");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("QuickServe.Models.Cart", b =>
+                {
+                    b.HasOne("QuickServe.Models.User", "User")
+                        .WithOne("Cart")
+                        .HasForeignKey("QuickServe.Models.Cart", "UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("QuickServe.Models.CartItem", b =>
+                {
+                    b.HasOne("QuickServe.Models.Cart", "Cart")
+                        .WithMany("CartItems")
+                        .HasForeignKey("CartID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("QuickServe.Models.Menu", "Menu")
+                        .WithMany("CartItems")
+                        .HasForeignKey("MenuID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cart");
+
+                    b.Navigation("Menu");
+                });
+
+            modelBuilder.Entity("QuickServe.Models.Menu", b =>
+                {
+                    b.HasOne("QuickServe.Models.Restaurant", "Restaurant")
+                        .WithMany("Menus")
+                        .HasForeignKey("RestaurantID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Restaurant");
+                });
+
+            modelBuilder.Entity("QuickServe.Models.Order", b =>
+                {
+                    b.HasOne("QuickServe.Models.Restaurant", "Restaurant")
+                        .WithMany("Orders")
+                        .HasForeignKey("RestaurantID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("QuickServe.Models.User", "User")
+                        .WithMany("Orders")
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Restaurant");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("QuickServe.Models.OrderItem", b =>
+                {
+                    b.HasOne("QuickServe.Models.Menu", "Menu")
+                        .WithMany("OrderItems")
+                        .HasForeignKey("MenuID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("QuickServe.Models.Order", "Order")
+                        .WithMany("OrderItems")
+                        .HasForeignKey("OrderID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Menu");
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("QuickServe.Models.Payment", b =>
+                {
+                    b.HasOne("QuickServe.Models.Order", "Order")
+                        .WithOne("Payment")
+                        .HasForeignKey("QuickServe.Models.Payment", "OrderID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("QuickServe.Models.Rating", b =>
+                {
+                    b.HasOne("QuickServe.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderID");
+
+                    b.HasOne("QuickServe.Models.Restaurant", "Restaurant")
+                        .WithMany("Ratings")
+                        .HasForeignKey("RestaurantID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("QuickServe.Models.User", "User")
+                        .WithMany("Ratings")
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Restaurant");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("QuickServe.Models.Cart", b =>
+                {
+                    b.Navigation("CartItems");
+                });
+
+            modelBuilder.Entity("QuickServe.Models.Menu", b =>
+                {
+                    b.Navigation("CartItems");
+
+                    b.Navigation("OrderItems");
+                });
+
+            modelBuilder.Entity("QuickServe.Models.Order", b =>
+                {
+                    b.Navigation("OrderItems");
+
+                    b.Navigation("Payment");
+                });
+
+            modelBuilder.Entity("QuickServe.Models.Restaurant", b =>
+                {
+                    b.Navigation("Menus");
+
+                    b.Navigation("Orders");
+
+                    b.Navigation("Ratings");
+                });
+
+            modelBuilder.Entity("QuickServe.Models.User", b =>
+                {
+                    b.Navigation("Cart");
+
+                    b.Navigation("Orders");
+
+                    b.Navigation("Ratings");
                 });
 #pragma warning restore 612, 618
         }
