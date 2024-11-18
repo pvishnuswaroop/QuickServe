@@ -14,3 +14,4 @@ namespace QuickServe.Repositories.Interfaces
         Task<bool> DeleteRatingAsync(int id);
     }
 }
+

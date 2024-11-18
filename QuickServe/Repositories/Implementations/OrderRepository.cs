@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,6 @@ namespace QuickServe.Repositories.Implementations
             }
             return order;
         }
-
 
         public async Task<IEnumerable<Order>> GetAllOrdersAsync()
         {
@@ -61,6 +61,31 @@ namespace QuickServe.Repositories.Implementations
         {
             return await _context.Orders
                 .Where(o => o.UserID == userId)
+                .ToListAsync();
+        }
+
+        // Fetch orders by restaurant ID
+        public async Task<IEnumerable<Order>> GetOrdersByRestaurantIdAsync(int restaurantId)
+        {
+            return await _context.Orders
+                .Where(o => o.RestaurantID == restaurantId)
+                .ToListAsync();
+        }
+
+        // Fetch orders by status
+        public async Task<IEnumerable<Order>> GetOrdersByStatusAsync(string status)
+        {
+            return await _context.Orders
+                .Where(o => o.OrderStatus != null && o.OrderStatus.Equals(status, StringComparison.OrdinalIgnoreCase))
+                .ToListAsync();
+        }
+
+
+        // Fetch orders by date range
+        public async Task<IEnumerable<Order>> GetOrdersByDateRangeAsync(DateTime startDate, DateTime endDate)
+        {
+            return await _context.Orders
+                .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
                 .ToListAsync();
         }
     }

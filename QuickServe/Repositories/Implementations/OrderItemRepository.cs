@@ -1,8 +1,10 @@
-﻿using QuickServe.Data;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using QuickServe.Data;
 using QuickServe.Models;
 using QuickServe.Repositories.Interfaces;
-using Microsoft.EntityFrameworkCore;
-
 
 namespace QuickServe.Repositories.Implementations
 {
@@ -10,11 +12,11 @@ namespace QuickServe.Repositories.Implementations
     {
         private readonly AppDbContext _context;
 
-
         public OrderItemRepository(AppDbContext context)
         {
             _context = context;
         }
+
         public async Task<OrderItem> GetOrderItemByIdAsync(int id)
         {
             var orderItem = await _context.OrderItems.FindAsync(id);
@@ -25,10 +27,24 @@ namespace QuickServe.Repositories.Implementations
             return orderItem;
         }
 
-
         public async Task<IEnumerable<OrderItem>> GetOrderItemsByOrderIdAsync(int orderId)
         {
-            return await _context.OrderItems.Where(o => o.OrderID == orderId).ToListAsync();
+            return await _context.OrderItems
+                .Where(oi => oi.OrderID == orderId)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<OrderItem>> GetOrderItemsByMenuIdAsync(int menuId)
+        {
+            return await _context.OrderItems
+                .Where(oi => oi.MenuID == menuId)
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<OrderItem>> GetOrderItemsByUserIdAsync(int userId)
+        {
+            return await _context.OrderItems
+                .Where(oi => oi.Order != null && oi.Order.UserID == userId)  
+                .ToListAsync();
         }
 
         public async Task<OrderItem> AddOrderItemAsync(OrderItem orderItem)

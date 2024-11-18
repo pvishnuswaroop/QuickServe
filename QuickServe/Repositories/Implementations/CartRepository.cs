@@ -15,17 +15,17 @@ namespace QuickServe.Repositories.Implementations
         {
             _context = context;
         }
+
         public async Task<Cart> GetCartByUserIdAsync(int userId)
         {
             var cart = await _context.Carts
-                .FirstOrDefaultAsync(c => c.UserID == userId);
+                .FirstOrDefaultAsync(c => c.UserID == userId); // Assuming one cart per user
             if (cart == null)
             {
-                throw new KeyNotFoundException($"Cart for User with ID {userId} not found.");
+                throw new KeyNotFoundException($"Cart for user with ID {userId} not found.");
             }
             return cart;
         }
-
 
         public async Task<IEnumerable<Cart>> GetAllCartsAsync()
         {

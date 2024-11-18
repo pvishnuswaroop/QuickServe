@@ -13,4 +13,3 @@ namespace QuickServe.Repositories.Interfaces
         Task<bool> DeleteCartItemAsync(int id);
     }
 }
-
