@@ -18,7 +18,8 @@ namespace QuickServe.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<Order> GetOrderByIdAsync(int id)
+        // Get an Order by its ID
+        public async Task<Order?> GetOrderByIdAsync(int id)
         {
             var order = await _context.Orders.FindAsync(id);
             if (order == null)
@@ -28,11 +29,13 @@ namespace QuickServe.Repositories.Implementations
             return order;
         }
 
+        // Get all orders
         public async Task<IEnumerable<Order>> GetAllOrdersAsync()
         {
             return await _context.Orders.ToListAsync();
         }
 
+        // Add a new order
         public async Task<Order> AddOrderAsync(Order order)
         {
             _context.Orders.Add(order);
@@ -40,6 +43,7 @@ namespace QuickServe.Repositories.Implementations
             return order;
         }
 
+        // Update an existing order
         public async Task<Order> UpdateOrderAsync(Order order)
         {
             _context.Orders.Update(order);
@@ -47,6 +51,7 @@ namespace QuickServe.Repositories.Implementations
             return order;
         }
 
+        // Delete an order by ID
         public async Task<bool> DeleteOrderAsync(int id)
         {
             var order = await _context.Orders.FindAsync(id);
@@ -57,6 +62,7 @@ namespace QuickServe.Repositories.Implementations
             return true;
         }
 
+        // Get orders by UserID
         public async Task<IEnumerable<Order>> GetOrdersByUserIdAsync(int userId)
         {
             return await _context.Orders
@@ -64,7 +70,7 @@ namespace QuickServe.Repositories.Implementations
                 .ToListAsync();
         }
 
-        // Fetch orders by restaurant ID
+        // Get orders by RestaurantID
         public async Task<IEnumerable<Order>> GetOrdersByRestaurantIdAsync(int restaurantId)
         {
             return await _context.Orders
@@ -72,20 +78,30 @@ namespace QuickServe.Repositories.Implementations
                 .ToListAsync();
         }
 
-        // Fetch orders by status
+        // Get orders by status
         public async Task<IEnumerable<Order>> GetOrdersByStatusAsync(string status)
         {
             return await _context.Orders
-                .Where(o => o.OrderStatus != null && o.OrderStatus.Equals(status, StringComparison.OrdinalIgnoreCase))
+                .Where(o => o.OrderStatus.ToString() != null &&
+                            string.Equals(o.OrderStatus.ToString(), status, StringComparison.OrdinalIgnoreCase))  // Convert enum to string
                 .ToListAsync();
         }
 
 
-        // Fetch orders by date range
+        // Get orders within a date range
         public async Task<IEnumerable<Order>> GetOrdersByDateRangeAsync(DateTime startDate, DateTime endDate)
         {
             return await _context.Orders
                 .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
+                .ToListAsync();
+        }
+
+        // Pagination for orders
+        public async Task<IEnumerable<Order>> GetOrdersWithPaginationAsync(int page, int pageSize)
+        {
+            return await _context.Orders
+                .Skip((page - 1) * pageSize)  // Skip to the correct page
+                .Take(pageSize)  // Limit the number of results per page
                 .ToListAsync();
         }
     }

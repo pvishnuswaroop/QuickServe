@@ -56,8 +56,6 @@ namespace QuickServe.Repositories.Implementations
             return true;
         }
 
-        // Additional functionalities
-
         // Get menus by restaurant ID
         public async Task<IEnumerable<Menu>> GetMenusByRestaurantIdAsync(int restaurantId)
         {
@@ -69,40 +67,67 @@ namespace QuickServe.Repositories.Implementations
         // Get menus by category
         public async Task<IEnumerable<Menu>> GetMenusByCategoryAsync(string category)
         {
-            // Check if category is null or empty
-            if (string.IsNullOrEmpty(category))
-            {
-                // Optionally, return all menus if category is null or empty
-                return await _context.Menus.ToListAsync();
-            }
-
-            return await _context.Menus
-                .Where(m => m.Category != null && m.Category.Equals(category, StringComparison.OrdinalIgnoreCase)) // Ensure Category is not null
-                .ToListAsync();
+            var query = _context.Menus.AsQueryable();
+            query = ApplyCategoryFilter(query, category);
+            return await query.ToListAsync();
         }
 
         // Search menus by name
         public async Task<IEnumerable<Menu>> SearchMenusByNameAsync(string name)
         {
-            // Check if name is null or empty
-            if (string.IsNullOrEmpty(name))
-            {
-                return new List<Menu>(); // Optionally return an empty list if name is null or empty
-            }
-
-            return await _context.Menus
-                .Where(m => m.ItemName != null && m.ItemName.Contains(name, StringComparison.OrdinalIgnoreCase)) // Ensure ItemName is not null
-                .ToListAsync();
+            var query = _context.Menus.AsQueryable();
+            query = ApplyNameFilter(query, name);
+            return await query.ToListAsync();
         }
 
-
         // Get menus with pagination
-        public async Task<IEnumerable<Menu>> GetMenusPaginatedAsync(int pageNumber, int pageSize)
+        public async Task<IEnumerable<Menu>> GetMenusPaginatedAsync(int pageNumber, int pageSize, string? sortBy = null)
         {
-            return await _context.Menus
+            var query = _context.Menus.AsQueryable();
+
+            // Apply sorting if specified
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                switch (sortBy.ToLower())
+                {
+                    case "name":
+                        query = query.OrderBy(m => m.ItemName);
+                        break;
+                    case "category":
+                        query = query.OrderBy(m => m.Category);
+                        break;
+                    case "price":
+                        query = query.OrderBy(m => m.Price); // Assuming Price is a property
+                        break;
+                    default:
+                        query = query.OrderBy(m => m.ItemName);
+                        break;
+                }
+            }
+
+            return await query
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
+        }
+
+        // Utility methods for filtering
+        private IQueryable<Menu> ApplyCategoryFilter(IQueryable<Menu> query, string? category)
+        {
+            if (!string.IsNullOrEmpty(category))
+            {
+                query = query.Where(m => m.Category != null && m.Category.Equals(category, StringComparison.OrdinalIgnoreCase));
+            }
+            return query;
+        }
+
+        private IQueryable<Menu> ApplyNameFilter(IQueryable<Menu> query, string? name)
+        {
+            if (!string.IsNullOrEmpty(name))
+            {
+                query = query.Where(m => m.ItemName != null && m.ItemName.Contains(name, StringComparison.OrdinalIgnoreCase));
+            }
+            return query;
         }
     }
 }

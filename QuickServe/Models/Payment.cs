@@ -1,14 +1,25 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QuickServe.Models
 {
+    public enum PaymentMethodEnum
+    {
+        CreditCard,
+        PayPal,
+        Cash,
+        BankTransfer,
+        Other
+    }
+
     public class Payment
     {
         [Key]
         public int PaymentID { get; set; }
 
         [Required(ErrorMessage = "Order ID is required.")]
+        [ForeignKey("Order")]
         public int OrderID { get; set; }  // Foreign Key
 
         [Required(ErrorMessage = "Amount paid is required.")]
@@ -17,17 +28,16 @@ namespace QuickServe.Models
 
         [Required(ErrorMessage = "Payment status is required.")]
         [StringLength(50, ErrorMessage = "Payment status cannot exceed 50 characters.")]
-        public string? PaymentStatus { get; set; }
+        public string PaymentStatus { get; set; }  // Payment status (e.g., "Completed", "Pending")
 
         [Required(ErrorMessage = "Payment date is required.")]
         public DateTime PaymentDate { get; set; }
 
-        // New attribute for payment method
         [Required(ErrorMessage = "Payment method is required.")]
-        [StringLength(50, ErrorMessage = "Payment method cannot exceed 50 characters.")]
-        public string? PaymentMethod { get; set; }  // E.g., "Credit Card", "PayPal", "Cash", etc.
+        public PaymentMethodEnum PaymentMethod { get; set; }  // Enum for payment method
 
-        // Navigation property
-        public virtual Order? Order { get; set; }  // One-to-one with Order
+        // Navigation properties
+        public virtual Order Order { get; set; }
+        public virtual User User { get; set; }  // Navigation property to User
     }
 }

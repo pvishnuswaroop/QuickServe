@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using QuickServe.Data;
@@ -16,14 +17,10 @@ namespace QuickServe.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<Restaurant> GetRestaurantByIdAsync(int id)
+        // Return nullable Restaurant to handle non-existent restaurants
+        public async Task<Restaurant?> GetRestaurantByIdAsync(int id)
         {
-            var restaurant = await _context.Restaurants.FindAsync(id);
-            if (restaurant == null)
-            {
-                throw new KeyNotFoundException($"Restaurant with ID {id} not found.");
-            }
-            return restaurant;
+            return await _context.Restaurants.FindAsync(id);
         }
 
         public async Task<IEnumerable<Restaurant>> GetAllRestaurantsAsync()
@@ -53,6 +50,14 @@ namespace QuickServe.Repositories.Implementations
             _context.Restaurants.Remove(restaurant);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        // Method to filter restaurants by location
+        public async Task<IEnumerable<Restaurant>> GetRestaurantsByLocationAsync(string location)
+        {
+            return await _context.Restaurants
+                                 .Where(r => r.Location.Contains(location))  // Assuming you have a 'Location' field
+                                 .ToListAsync();
         }
     }
 }

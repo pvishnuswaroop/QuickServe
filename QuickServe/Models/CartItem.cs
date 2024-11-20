@@ -19,7 +19,7 @@ namespace QuickServe.Models
         public int Quantity { get; set; }
 
         // Navigation properties
-        public virtual Cart? Cart { get; set; }  // Many-to-one with Cart
-        public virtual Menu? Menu { get; set; }  // Many-to-one with Menu
+        public virtual Cart Cart { get; set; }  // Many-to-one with Cart
+        public virtual Menu Menu { get; set; }  // Many-to-one with Menu
     }
 }
