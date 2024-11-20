@@ -66,7 +66,7 @@ namespace QuickServe.Data
                 .HasOne(oi => oi.Order)
                 .WithMany(o => o.OrderItems)
                 .HasForeignKey(oi => oi.OrderID)
-                .OnDelete(DeleteBehavior.NoAction); 
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Cart ↔ CartItem: One-to-Many relationship
             modelBuilder.Entity<CartItem>()
@@ -91,6 +91,17 @@ namespace QuickServe.Data
             modelBuilder.Entity<Payment>()
                 .Property(p => p.AmountPaid)
                 .HasColumnType("decimal(18,2)");
+
+            // Add Indexes for frequently queried fields (e.g., UserID in Carts)
+            modelBuilder.Entity<Cart>()
+                .HasIndex(c => c.UserID)
+                .IsUnique(); // Enforcing one active cart per user
+
+            modelBuilder.Entity<CartItem>()
+                .HasIndex(ci => ci.CartID);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasIndex(oi => oi.OrderID);
 
             base.OnModelCreating(modelBuilder);
         }
