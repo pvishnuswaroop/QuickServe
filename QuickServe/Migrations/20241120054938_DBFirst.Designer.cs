@@ -12,7 +12,7 @@ using QuickServe.Data;
 namespace QuickServe.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241120053436_DBFirst")]
+    [Migration("20241120054938_DBFirst")]
     partial class DBFirst
     {
         /// <inheritdoc />
