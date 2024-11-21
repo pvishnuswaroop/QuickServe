@@ -62,7 +62,7 @@ namespace QuickServe.Models
         public DateTime? LastLogin { get; set; }
 
         [Required]
-        public UserRole Role { get; set; }
+        public string Role { get; set; }
 
         public List<string> Roles { get; set; }
 

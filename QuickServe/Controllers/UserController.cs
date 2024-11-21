@@ -1,108 +1,44 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using QuickServe.DTO;
-using QuickServe.DTOs;
-using QuickServe.Models;
-using QuickServe.Services;
-using QuickServe.Services.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QuickServe.Services.Interfaces; // If using services for logic
+using QuickServe.Data;  // For accessing the database context
+using QuickServe.Models; // Your models namespace
 
 namespace QuickServe.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UsersController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly AppDbContext _context; // Injecting the DbContext
 
-        public UserController(IUserService userService)
+        public UsersController(AppDbContext context)
         {
-            _userService = userService;
+            _context = context;
         }
 
-        // POST: api/user/register
-        [HttpPost("register")]
-        public async Task<ActionResult<User>> RegisterUser([FromBody] RegisterDto registerDto)
-        {
-            if (registerDto == null)
-                return BadRequest("Invalid user data.");
-
-            var registeredUser = await _userService.RegisterUserAsync(registerDto.Email, registerDto.Password);
-
-            return CreatedAtAction(nameof(GetUserById), new { id = registeredUser.UserID }, registeredUser);
-        }
-
-
-        // POST: api/user/login
-        [HttpPost("login")]
-        public async Task<ActionResult<string>> LoginUser([FromBody] LoginDto loginDto)
-        {
-            if (loginDto == null)
-                return BadRequest("Invalid credentials.");
-
-            var token = await _userService.LoginUserAsync(loginDto.Email, loginDto.Password);
-
-            if (string.IsNullOrEmpty(token))
-                return Unauthorized("Invalid email or password.");
-
-            return Ok(new { Token = token });
-        }
-
-        // GET: api/user/{id}
-        [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,User")]
-        public async Task<ActionResult<User>> GetUserById(int id)
-        {
-            var user = await _userService.GetUserByIdAsync(id);
-
-            if (user == null)
-                return NotFound();
-
-            return Ok(user);
-        }
-
-
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,User")]
-        public async Task<ActionResult> UpdateUser(int id, [FromBody] UpdateUserDto updateUserDto)
-        {
-            if (updateUserDto == null)
-                return BadRequest("Invalid user data.");
-
-            var existingUser = await _userService.GetUserByIdAsync(id);
-            if (existingUser == null)
-                return NotFound();
-
-            existingUser.Name = updateUserDto.Name;
-            existingUser.ContactNumber = updateUserDto.ContactNumber;
-            existingUser.Address = updateUserDto.Address;
-
-            await _userService.UpdateUserAsync(existingUser);
-            return NoContent();
-        }
-
-
-        // DELETE: api/user/{id}
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> DeleteUser(int id)
-        {
-            var user = await _userService.GetUserByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            await _userService.DeleteUserAsync(id);
-            return NoContent();
-        }
-
-        // GET: api/user
+        // GET api/users
         [HttpGet]
-        [Authorize(Roles = "Admin")] // Only Admins can view all users
-        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
-            var users = await _userService.GetAllUsersAsync();
-            return Ok(users);
+            // Retrieve all users from the database
+            var users = await _context.Users.ToListAsync();
+            return Ok(users); // Return the list of users as a response
+        }
+
+        // GET api/users/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<User>> GetUser(int id)
+        {
+            // Retrieve a specific user by ID
+            var user = await _context.Users.FindAsync(id);
+
+            if (user == null)
+            {
+                return NotFound(); // Return 404 if the user is not found
+            }
+
+            return Ok(user); // Return the user data
         }
     }
 }
