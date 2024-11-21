@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Authentication;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using QuickServe.Data;
+﻿using Microsoft.EntityFrameworkCore;
 using QuickServe.Models;
+using QuickServe.Data;
 using QuickServe.Repositories.Interfaces;
+using System.Threading.Tasks;
+using System.Security.Authentication;
 
 namespace QuickServe.Repositories.Implementations
 {
@@ -23,6 +17,14 @@ namespace QuickServe.Repositories.Implementations
             _context = context;
             _logger = logger;
         }
+
+        // Implement GetUserByEmailAsync
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);  // Retrieve user by email
+        }
+
+        // Other methods...
 
         public async Task<User> GetUserByIdAsync(int id)
         {
@@ -41,16 +43,10 @@ namespace QuickServe.Repositories.Implementations
 
         public async Task<User> AddUserAsync(User user)
         {
-            // Check if email already exists
-            if (await _context.Users.AnyAsync(u => u.Email == user.Email))
+            if (string.IsNullOrWhiteSpace(user.Password))
             {
-                throw new InvalidOperationException("Email is already taken.");
+                throw new ArgumentException("Password cannot be null or empty.");
             }
-
-            // Hash the password before storing
-            var passwordHashData = HashPassword(user.Password);
-            user.PasswordHash = passwordHashData.Hash;
-            user.PasswordSalt = passwordHashData.Salt;
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -65,15 +61,15 @@ namespace QuickServe.Repositories.Implementations
                 throw new KeyNotFoundException("User not found.");
             }
 
-            // Update user fields if necessary
-            existingUser.Email = user.Email ?? existingUser.Email;
             existingUser.Name = user.Name ?? existingUser.Name;
-            // Optionally, update password if it's provided
-            if (!string.IsNullOrEmpty(user.Password))
+            existingUser.Gender = user.Gender ?? existingUser.Gender;
+            existingUser.ContactNumber = user.ContactNumber ?? existingUser.ContactNumber;
+            existingUser.Email = user.Email ?? existingUser.Email;
+            existingUser.Address = user.Address ?? existingUser.Address;
+
+            if (!string.IsNullOrWhiteSpace(user.Password))
             {
-                var passwordHashData = HashPassword(user.Password);
-                existingUser.PasswordHash = passwordHashData.Hash;
-                existingUser.PasswordSalt = passwordHashData.Salt;
+                existingUser.Password = user.Password;  // Update password directly (plaintext)
             }
 
             _context.Users.Update(existingUser);
@@ -94,7 +90,7 @@ namespace QuickServe.Repositories.Implementations
         public async Task<User> LoginUserAsync(string email, string password)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null || !VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+            if (user == null || !user.ValidatePassword(password))
             {
                 _logger.LogWarning("Login failed for email: {Email}", email);
                 throw new AuthenticationException("Invalid email or password.");
@@ -102,27 +98,6 @@ namespace QuickServe.Repositories.Implementations
 
             _logger.LogInformation("User {Email} logged in successfully.", email);
             return user;
-        }
-
-        // Method to hash password using SHA512 and a unique salt
-        private (string Hash, string Salt) HashPassword(string password)
-        {
-            using (var hmac = new HMACSHA512())
-            {
-                var salt = Convert.ToBase64String(hmac.Key);  // generate salt
-                var passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return (Convert.ToBase64String(passwordHash), salt);
-            }
-        }
-
-        // Method to verify hashed password
-        private bool VerifyPasswordHash(string password, string storedHash, string storedSalt)
-        {
-            using (var hmac = new HMACSHA512(Convert.FromBase64String(storedSalt)))
-            {
-                var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return computedHash.SequenceEqual(Convert.FromBase64String(storedHash));
-            }
         }
     }
 }

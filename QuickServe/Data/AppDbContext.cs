@@ -19,6 +19,7 @@ namespace QuickServe.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
             // Menu ↔ OrderItem: One-to-Many relationship
             modelBuilder.Entity<OrderItem>()
                 .HasOne(oi => oi.Menu)
@@ -104,6 +105,7 @@ namespace QuickServe.Data
                 .HasIndex(oi => oi.OrderID);
 
             base.OnModelCreating(modelBuilder);
+
         }
     }
 }
