@@ -20,7 +20,7 @@ namespace QuickServe.Models
 
         [Required(ErrorMessage = "Order ID is required.")]
         [ForeignKey("Order")]
-        public int OrderID { get; set; }  // Foreign Key
+        public int OrderID { get; set; }  // Foreign Key for Order
 
         [Required(ErrorMessage = "Amount paid is required.")]
         [Range(0.01, double.MaxValue, ErrorMessage = "Amount paid must be greater than zero.")]
@@ -39,5 +39,10 @@ namespace QuickServe.Models
         // Navigation properties
         public virtual Order Order { get; set; }
         public virtual User User { get; set; }  // Navigation property to User
+
+        // Optional: If you want to track the user making the payment, add a foreign key
+        [Required(ErrorMessage = "User ID is required.")]
+        [ForeignKey("User")]
+        public int UserID { get; set; }  // Foreign Key for User (optional, based on your use case)
     }
 }

@@ -11,11 +11,11 @@ namespace QuickServe.Models
 
         [Required(ErrorMessage = "Order ID is required.")]
         [ForeignKey("Order")]
-        public int OrderID { get; set; }  // Foreign Key
+        public int OrderID { get; set; }  // Foreign Key for Order
 
         [Required(ErrorMessage = "Menu ID is required.")]
         [ForeignKey("Menu")]
-        public int MenuID { get; set; }  // Foreign Key
+        public int MenuID { get; set; }  // Foreign Key for Menu
 
         [Required(ErrorMessage = "Quantity is required.")]
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than zero.")]

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QuickServe.Models
 {
@@ -9,10 +10,12 @@ namespace QuickServe.Models
         public int CartItemID { get; set; }
 
         [Required(ErrorMessage = "Cart ID is required.")]
-        public int CartID { get; set; }  // Foreign Key
+        [ForeignKey("Cart")]
+        public int CartID { get; set; }  // Foreign Key to Cart
 
         [Required(ErrorMessage = "Menu ID is required.")]
-        public int MenuID { get; set; }  // Foreign Key
+        [ForeignKey("Menu")]
+        public int MenuID { get; set; }  // Foreign Key to Menu
 
         [Required(ErrorMessage = "Quantity is required.")]
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than zero.")]

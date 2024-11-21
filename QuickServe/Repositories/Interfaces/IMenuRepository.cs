@@ -12,12 +12,11 @@ namespace QuickServe.Repositories.Interfaces
         Task<Menu> UpdateMenuAsync(Menu menu);
         Task<bool> DeleteMenuAsync(int id);
 
-        // Additional functionalities
-        Task<IEnumerable<Menu>> GetMenusByRestaurantIdAsync(int restaurantId);  // Get all menus for a specific restaurant
-        Task<IEnumerable<Menu>> GetMenusByCategoryAsync(string category);  // Search menus by category
-        Task<IEnumerable<Menu>> SearchMenusByNameAsync(string name);  // Search menus by name
+        Task<IEnumerable<Menu>> GetMenusByRestaurantIdAsync(int restaurantId);
+        Task<IEnumerable<Menu>> GetMenusByCategoryAsync(string category);
+        Task<IEnumerable<Menu>> SearchMenusByNameAsync(string name);
 
         // Pagination with sorting option (optional)
-        Task<IEnumerable<Menu>> GetMenusPaginatedAsync(int pageNumber, int pageSize, string? sortBy = null);  // Paginate menus with optional sorting
+        Task<IEnumerable<Menu>> GetMenusPaginatedAsync(int pageNumber, int pageSize, string? sortBy = null);
     }
 }

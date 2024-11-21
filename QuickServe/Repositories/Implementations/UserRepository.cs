@@ -1,9 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
-using QuickServe.Models;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using QuickServe.Data;
+using QuickServe.Models;
 using QuickServe.Repositories.Interfaces;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Security.Authentication;
+using System.Threading.Tasks;
 
 namespace QuickServe.Repositories.Implementations
 {
@@ -11,20 +14,14 @@ namespace QuickServe.Repositories.Implementations
     {
         private readonly AppDbContext _context;
         private readonly ILogger<UserRepository> _logger;
+        private readonly PasswordHasher<User> _passwordHasher;
 
         public UserRepository(AppDbContext context, ILogger<UserRepository> logger)
         {
             _context = context;
             _logger = logger;
+            _passwordHasher = new PasswordHasher<User>();
         }
-
-        // Implement GetUserByEmailAsync
-        public async Task<User> GetUserByEmailAsync(string email)
-        {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);  // Retrieve user by email
-        }
-
-        // Other methods...
 
         public async Task<User> GetUserByIdAsync(int id)
         {
@@ -36,6 +33,11 @@ namespace QuickServe.Repositories.Implementations
             return user;
         }
 
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            return await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+        }
+
         public async Task<IEnumerable<User>> GetAllUsersAsync()
         {
             return await _context.Users.AsNoTracking().ToListAsync();
@@ -43,11 +45,7 @@ namespace QuickServe.Repositories.Implementations
 
         public async Task<User> AddUserAsync(User user)
         {
-            if (string.IsNullOrWhiteSpace(user.Password))
-            {
-                throw new ArgumentException("Password cannot be null or empty.");
-            }
-
+            user.PasswordHash = _passwordHasher.HashPassword(user, user.PasswordHash); // Hash the password
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             return user;
@@ -61,15 +59,17 @@ namespace QuickServe.Repositories.Implementations
                 throw new KeyNotFoundException("User not found.");
             }
 
+            // Update fields if they are provided
             existingUser.Name = user.Name ?? existingUser.Name;
             existingUser.Gender = user.Gender ?? existingUser.Gender;
             existingUser.ContactNumber = user.ContactNumber ?? existingUser.ContactNumber;
             existingUser.Email = user.Email ?? existingUser.Email;
             existingUser.Address = user.Address ?? existingUser.Address;
 
-            if (!string.IsNullOrWhiteSpace(user.Password))
+            // Update password if provided
+            if (!string.IsNullOrWhiteSpace(user.PasswordHash))
             {
-                existingUser.Password = user.Password;  // Update password directly (plaintext)
+                existingUser.PasswordHash = _passwordHasher.HashPassword(existingUser, user.PasswordHash);
             }
 
             _context.Users.Update(existingUser);
@@ -89,12 +89,17 @@ namespace QuickServe.Repositories.Implementations
 
         public async Task<User> LoginUserAsync(string email, string password)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
             if (user == null || !user.ValidatePassword(password))
             {
                 _logger.LogWarning("Login failed for email: {Email}", email);
                 throw new AuthenticationException("Invalid email or password.");
             }
+
+            // Update last login time
+            user.LastLogin = DateTime.Now;
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
 
             _logger.LogInformation("User {Email} logged in successfully.", email);
             return user;

@@ -1,71 +1,108 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using QuickServe.DTO;
 using QuickServe.DTOs;
+using QuickServe.Models;
+using QuickServe.Services;
 using QuickServe.Services.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace QuickServe.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
 
-        // Constructor injection of IUserService
         public UserController(IUserService userService)
         {
             _userService = userService;
         }
 
-        // GET: api/user
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserReadDTO>>> GetAllUsers()
+        // POST: api/user/register
+        [HttpPost("register")]
+        public async Task<ActionResult<User>> RegisterUser([FromBody] RegisterDto registerDto)
         {
-            var users = await _userService.GetAllUsersAsync();
-            return Ok(users);
+            if (registerDto == null)
+                return BadRequest("Invalid user data.");
+
+            var registeredUser = await _userService.RegisterUserAsync(registerDto.Email, registerDto.Password);
+
+            return CreatedAtAction(nameof(GetUserById), new { id = registeredUser.UserID }, registeredUser);
         }
 
-        // GET: api/user/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<UserReadDTO>> GetUserById(int id)
-        {
-            var user = await _userService.GetUserByIdAsync(id);
-            if (user == null) return NotFound("User not found.");
-            return Ok(user);
-        }
-
-        // POST: api/user
-        [HttpPost]
-        public async Task<ActionResult<UserReadDTO>> AddUser(UserCreateDTO userDTO)
-        {
-            var createdUser = await _userService.AddUserAsync(userDTO);
-            return CreatedAtAction(nameof(GetUserById), new { id = createdUser.UserID }, createdUser);
-        }
-
-        // PUT: api/user/5
-        [HttpPut("{id}")]
-        public async Task<ActionResult<UserReadDTO>> UpdateUser(int id, UserUpdateDTO userDTO)
-        {
-            var updatedUser = await _userService.UpdateUserAsync(id, userDTO);
-            return Ok(updatedUser);
-        }
 
         // POST: api/user/login
         [HttpPost("login")]
-        public async Task<ActionResult<UserReadDTO>> Login(UserLoginDTO loginDTO)
+        public async Task<ActionResult<string>> LoginUser([FromBody] LoginDto loginDto)
         {
-            var user = await _userService.LoginUserAsync(loginDTO);
+            if (loginDto == null)
+                return BadRequest("Invalid credentials.");
+
+            var token = await _userService.LoginUserAsync(loginDto.Email, loginDto.Password);
+
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized("Invalid email or password.");
+
+            return Ok(new { Token = token });
+        }
+
+        // GET: api/user/{id}
+        [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,User")]
+        public async Task<ActionResult<User>> GetUserById(int id)
+        {
+            var user = await _userService.GetUserByIdAsync(id);
+
+            if (user == null)
+                return NotFound();
+
             return Ok(user);
         }
 
-        // DELETE: api/user/5
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,User")]
+        public async Task<ActionResult> UpdateUser(int id, [FromBody] UpdateUserDto updateUserDto)
+        {
+            if (updateUserDto == null)
+                return BadRequest("Invalid user data.");
+
+            var existingUser = await _userService.GetUserByIdAsync(id);
+            if (existingUser == null)
+                return NotFound();
+
+            existingUser.Name = updateUserDto.Name;
+            existingUser.ContactNumber = updateUserDto.ContactNumber;
+            existingUser.Address = updateUserDto.Address;
+
+            await _userService.UpdateUserAsync(existingUser);
+            return NoContent();
+        }
+
+
+        // DELETE: api/user/{id}
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteUser(int id)
         {
-            var result = await _userService.DeleteUserAsync(id);
-            if (!result) return NotFound("User not found.");
+            var user = await _userService.GetUserByIdAsync(id);
+            if (user == null)
+                return NotFound();
+
+            await _userService.DeleteUserAsync(id);
             return NoContent();
+        }
+
+        // GET: api/user
+        [HttpGet]
+        [Authorize(Roles = "Admin")] // Only Admins can view all users
+        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
+        {
+            var users = await _userService.GetAllUsersAsync();
+            return Ok(users);
         }
     }
 }

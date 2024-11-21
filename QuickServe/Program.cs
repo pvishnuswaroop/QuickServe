@@ -1,9 +1,10 @@
-using QuickServe.Services.Interfaces;
-using QuickServe.Services.Implementations;
+
 using QuickServe.Repositories.Interfaces;
 using QuickServe.Repositories.Implementations;
 using Microsoft.EntityFrameworkCore;
 using QuickServe.Data;
+using QuickServe.Services.Interfaces;
+using QuickServe.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,11 +15,13 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register IUserService and its implementation UserService
-builder.Services.AddScoped<IUserService, UserService>();  // Ensure this is here!
+
 
 // Register IUserRepository and UserRepository
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+builder.Services.AddScoped<IUserService, UserService>();
+
 
 // Add Swagger for API documentation
 builder.Services.AddEndpointsApiExplorer();

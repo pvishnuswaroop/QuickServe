@@ -18,7 +18,7 @@ namespace QuickServe.Models
         public int MenuID { get; set; }
 
         [Required(ErrorMessage = "Restaurant ID is required.")]
-        public int RestaurantID { get; set; }  // Foreign Key
+        public int RestaurantID { get; set; }  // Foreign Key for Restaurant
 
         [Required(ErrorMessage = "Item name is required.")]
         [StringLength(100, ErrorMessage = "Item name cannot exceed 100 characters.")]
@@ -45,7 +45,7 @@ namespace QuickServe.Models
         public MenuItemStatus Status { get; set; }  // Enum for status
 
         // Navigation properties
-        public virtual Restaurant Restaurant { get; set; }  // Non-nullable, since every menu item belongs to a restaurant
+        public virtual Restaurant Restaurant { get; set; }  // Many-to-one relationship with Restaurant
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();  // One-to-many with OrderItem
         public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();  // One-to-many with CartItem
     }

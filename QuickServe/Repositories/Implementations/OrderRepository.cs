@@ -18,24 +18,28 @@ namespace QuickServe.Repositories.Implementations
             _context = context;
         }
 
-        // Get an Order by its ID
         public async Task<Order?> GetOrderByIdAsync(int id)
         {
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null)
-            {
-                throw new KeyNotFoundException($"Order with ID {id} not found.");
-            }
-            return order;
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)  // Eager load related OrderItems
+                .Include(o => o.User)  // Eager load User
+                .Include(o => o.Restaurant)  // Eager load Restaurant
+                .Include(o => o.Payment)  // Eager load Payment
+                .FirstOrDefaultAsync(o => o.OrderID == id);
+
+            return order;  // Return null if not found, no need for exception handling
         }
 
-        // Get all orders
         public async Task<IEnumerable<Order>> GetAllOrdersAsync()
         {
-            return await _context.Orders.ToListAsync();
+            return await _context.Orders
+                .Include(o => o.OrderItems)  // Eager load OrderItems
+                .Include(o => o.User)  // Eager load User
+                .Include(o => o.Restaurant)  // Eager load Restaurant
+                .Include(o => o.Payment)  // Eager load Payment
+                .ToListAsync();
         }
 
-        // Add a new order
         public async Task<Order> AddOrderAsync(Order order)
         {
             _context.Orders.Add(order);
@@ -43,7 +47,6 @@ namespace QuickServe.Repositories.Implementations
             return order;
         }
 
-        // Update an existing order
         public async Task<Order> UpdateOrderAsync(Order order)
         {
             _context.Orders.Update(order);
@@ -51,7 +54,6 @@ namespace QuickServe.Repositories.Implementations
             return order;
         }
 
-        // Delete an order by ID
         public async Task<bool> DeleteOrderAsync(int id)
         {
             var order = await _context.Orders.FindAsync(id);
@@ -62,46 +64,58 @@ namespace QuickServe.Repositories.Implementations
             return true;
         }
 
-        // Get orders by UserID
         public async Task<IEnumerable<Order>> GetOrdersByUserIdAsync(int userId)
         {
             return await _context.Orders
                 .Where(o => o.UserID == userId)
+                .Include(o => o.OrderItems)  // Eager load related OrderItems
                 .ToListAsync();
         }
 
-        // Get orders by RestaurantID
         public async Task<IEnumerable<Order>> GetOrdersByRestaurantIdAsync(int restaurantId)
         {
             return await _context.Orders
                 .Where(o => o.RestaurantID == restaurantId)
+                .Include(o => o.OrderItems)  // Eager load related OrderItems
                 .ToListAsync();
         }
 
-        // Get orders by status
         public async Task<IEnumerable<Order>> GetOrdersByStatusAsync(string status)
         {
-            return await _context.Orders
-                .Where(o => o.OrderStatus.ToString() != null &&
-                            string.Equals(o.OrderStatus.ToString(), status, StringComparison.OrdinalIgnoreCase))  // Convert enum to string
-                .ToListAsync();
+            if (Enum.TryParse(status, ignoreCase: true, out OrderStatus parsedStatus))
+            {
+                return await _context.Orders
+                    .Where(o => o.OrderStatus == parsedStatus)
+                    .Include(o => o.OrderItems)  // Eager load related OrderItems
+                    .ToListAsync();
+            }
+            return Enumerable.Empty<Order>();  // Return an empty list if status is invalid
         }
 
-
-        // Get orders within a date range
         public async Task<IEnumerable<Order>> GetOrdersByDateRangeAsync(DateTime startDate, DateTime endDate)
         {
+            if (startDate > endDate)
+            {
+                throw new ArgumentException("Start date cannot be later than end date.");
+            }
+
             return await _context.Orders
                 .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
+                .Include(o => o.OrderItems)  // Eager load related OrderItems
                 .ToListAsync();
         }
 
-        // Pagination for orders
         public async Task<IEnumerable<Order>> GetOrdersWithPaginationAsync(int page, int pageSize)
         {
+            if (page <= 0 || pageSize <= 0)
+            {
+                throw new ArgumentOutOfRangeException("Page and PageSize must be greater than zero.");
+            }
+
             return await _context.Orders
                 .Skip((page - 1) * pageSize)  // Skip to the correct page
                 .Take(pageSize)  // Limit the number of results per page
+                .Include(o => o.OrderItems)  // Eager load related OrderItems
                 .ToListAsync();
         }
     }

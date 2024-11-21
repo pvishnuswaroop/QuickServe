@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -17,21 +18,23 @@ namespace QuickServe.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<Menu> GetMenuByIdAsync(int id)
+        // Get a Menu by ID
+        public async Task<Menu?> GetMenuByIdAsync(int id)
         {
-            var menu = await _context.Menus.FindAsync(id);
-            if (menu == null)
-            {
-                throw new KeyNotFoundException($"Menu with ID {id} not found.");
-            }
-            return menu;
+            return await _context.Menus
+                .Include(m => m.Restaurant)  // Eager load related Restaurant
+                .FirstOrDefaultAsync(m => m.MenuID == id);  // Return null if not found
         }
 
+        // Get all menus
         public async Task<IEnumerable<Menu>> GetAllMenusAsync()
         {
-            return await _context.Menus.ToListAsync();
+            return await _context.Menus
+                .Include(m => m.Restaurant)  // Eager load related Restaurant
+                .ToListAsync();
         }
 
+        // Add a new menu
         public async Task<Menu> AddMenuAsync(Menu menu)
         {
             _context.Menus.Add(menu);
@@ -39,6 +42,7 @@ namespace QuickServe.Repositories.Implementations
             return menu;
         }
 
+        // Update an existing menu
         public async Task<Menu> UpdateMenuAsync(Menu menu)
         {
             _context.Menus.Update(menu);
@@ -46,6 +50,7 @@ namespace QuickServe.Repositories.Implementations
             return menu;
         }
 
+        // Delete a menu by ID
         public async Task<bool> DeleteMenuAsync(int id)
         {
             var menu = await _context.Menus.FindAsync(id);
@@ -56,78 +61,63 @@ namespace QuickServe.Repositories.Implementations
             return true;
         }
 
-        // Get menus by restaurant ID
+        // Get menus by Restaurant ID
         public async Task<IEnumerable<Menu>> GetMenusByRestaurantIdAsync(int restaurantId)
         {
             return await _context.Menus
                 .Where(m => m.RestaurantID == restaurantId)
+                .Include(m => m.Restaurant)  // Eager load related Restaurant
                 .ToListAsync();
         }
 
-        // Get menus by category
+        // Get menus by Category
         public async Task<IEnumerable<Menu>> GetMenusByCategoryAsync(string category)
         {
-            var query = _context.Menus.AsQueryable();
-            query = ApplyCategoryFilter(query, category);
-            return await query.ToListAsync();
+            if (string.IsNullOrWhiteSpace(category)) return Enumerable.Empty<Menu>();
+
+            return await _context.Menus
+                .Where(m => m.Category.Equals(category, StringComparison.OrdinalIgnoreCase))
+                .Include(m => m.Restaurant)  // Eager load related Restaurant
+                .ToListAsync();
         }
 
         // Search menus by name
         public async Task<IEnumerable<Menu>> SearchMenusByNameAsync(string name)
         {
-            var query = _context.Menus.AsQueryable();
-            query = ApplyNameFilter(query, name);
-            return await query.ToListAsync();
+            if (string.IsNullOrWhiteSpace(name)) return Enumerable.Empty<Menu>();
+
+            return await _context.Menus
+                .Where(m => m.ItemName.Contains(name, StringComparison.OrdinalIgnoreCase))
+                .Include(m => m.Restaurant)  // Eager load related Restaurant
+                .ToListAsync();
         }
 
-        // Get menus with pagination
+        // Get menus with pagination and optional sorting
         public async Task<IEnumerable<Menu>> GetMenusPaginatedAsync(int pageNumber, int pageSize, string? sortBy = null)
         {
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                throw new ArgumentOutOfRangeException("Page number and page size must be greater than zero.");
+            }
+
             var query = _context.Menus.AsQueryable();
 
             // Apply sorting if specified
             if (!string.IsNullOrEmpty(sortBy))
             {
-                switch (sortBy.ToLower())
+                query = sortBy.ToLower() switch
                 {
-                    case "name":
-                        query = query.OrderBy(m => m.ItemName);
-                        break;
-                    case "category":
-                        query = query.OrderBy(m => m.Category);
-                        break;
-                    case "price":
-                        query = query.OrderBy(m => m.Price); // Assuming Price is a property
-                        break;
-                    default:
-                        query = query.OrderBy(m => m.ItemName);
-                        break;
-                }
+                    "name" => query.OrderBy(m => m.ItemName),
+                    "category" => query.OrderBy(m => m.Category),
+                    "price" => query.OrderBy(m => m.Price),
+                    _ => query.OrderBy(m => m.ItemName) // Default sort by name
+                };
             }
 
             return await query
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
-        }
-
-        // Utility methods for filtering
-        private IQueryable<Menu> ApplyCategoryFilter(IQueryable<Menu> query, string? category)
-        {
-            if (!string.IsNullOrEmpty(category))
-            {
-                query = query.Where(m => m.Category != null && m.Category.Equals(category, StringComparison.OrdinalIgnoreCase));
-            }
-            return query;
-        }
-
-        private IQueryable<Menu> ApplyNameFilter(IQueryable<Menu> query, string? name)
-        {
-            if (!string.IsNullOrEmpty(name))
-            {
-                query = query.Where(m => m.ItemName != null && m.ItemName.Contains(name, StringComparison.OrdinalIgnoreCase));
-            }
-            return query;
         }
     }
 }

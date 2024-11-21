@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace QuickServe.Models
 {
@@ -12,6 +14,14 @@ namespace QuickServe.Models
         DeliveryPerson
     }
 
+    public enum Gender
+    {
+        Male,
+        Female,
+        Other,
+        PreferNotToSay
+    }
+
     public class User
     {
         [Key]
@@ -21,7 +31,7 @@ namespace QuickServe.Models
         [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters.")]
         public string Name { get; set; }
 
-        public string? Gender { get; set; }
+        public Gender? Gender { get; set; }
 
         [Required(ErrorMessage = "Contact number is required.")]
         [Phone(ErrorMessage = "Invalid contact number format.")]
@@ -31,18 +41,16 @@ namespace QuickServe.Models
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress(ErrorMessage = "Invalid email format.")]
         [StringLength(255, ErrorMessage = "Email cannot exceed 255 characters.")]
+
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Address is required.")]
         [StringLength(500, ErrorMessage = "Address cannot exceed 500 characters.")]
         public string Address { get; set; }
 
-        // Storing the plaintext password
-        [Required(ErrorMessage = "Password is required.")]
-        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters long.")]
-        [RegularExpression(@"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$",
-            ErrorMessage = "Password must contain at least one letter and one number.")]
-        public string Password { get; set; }
+        // Only store the hashed password
+        [Required]
+        public string PasswordHash { get; set; }
 
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
         public virtual Cart Cart { get; set; }
@@ -56,10 +64,14 @@ namespace QuickServe.Models
         [Required]
         public UserRole Role { get; set; }
 
-        // Validation method for password comparison (plaintext comparison)
+        public List<string> Roles { get; set; }
+
+        // Password validation using hashed password comparison
         public bool ValidatePassword(string inputPassword)
         {
-            return Password == inputPassword;
+            var passwordHasher = new PasswordHasher<User>();
+            var result = passwordHasher.VerifyHashedPassword(this, PasswordHash, inputPassword);
+            return result == PasswordVerificationResult.Success;
         }
     }
 }

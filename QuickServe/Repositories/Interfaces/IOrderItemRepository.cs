@@ -13,8 +13,6 @@ namespace QuickServe.Repositories.Interfaces
         Task<OrderItem> AddOrderItemAsync(OrderItem orderItem);
         Task<OrderItem> UpdateOrderItemAsync(OrderItem orderItem);
         Task<bool> DeleteOrderItemAsync(int id);
-
-        // Optional: Pagination support for large result sets
         Task<IEnumerable<OrderItem>> GetOrderItemsByOrderIdWithPaginationAsync(int orderId, int page, int pageSize);  // Paginated results for order items by order
     }
 }

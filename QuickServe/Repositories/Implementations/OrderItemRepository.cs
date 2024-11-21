@@ -17,18 +17,11 @@ namespace QuickServe.Repositories.Implementations
             _context = context;
         }
 
-        // Get an OrderItem by its ID
-        public async Task<OrderItem> GetOrderItemByIdAsync(int id)
+        public async Task<OrderItem?> GetOrderItemByIdAsync(int id)
         {
-            var orderItem = await _context.OrderItems.FindAsync(id);
-            if (orderItem == null)
-            {
-                throw new KeyNotFoundException($"OrderItem with ID {id} not found.");
-            }
-            return orderItem;
+            return await _context.OrderItems.FindAsync(id);  // Return null if not found instead of throwing an exception
         }
 
-        // Get all OrderItems for a specific Order
         public async Task<IEnumerable<OrderItem>> GetOrderItemsByOrderIdAsync(int orderId)
         {
             return await _context.OrderItems
@@ -36,7 +29,6 @@ namespace QuickServe.Repositories.Implementations
                 .ToListAsync();
         }
 
-        // Get all OrderItems for a specific Menu item
         public async Task<IEnumerable<OrderItem>> GetOrderItemsByMenuIdAsync(int menuId)
         {
             return await _context.OrderItems
@@ -44,7 +36,6 @@ namespace QuickServe.Repositories.Implementations
                 .ToListAsync();
         }
 
-        // Get all OrderItems for a specific User via their Orders
         public async Task<IEnumerable<OrderItem>> GetOrderItemsByUserIdAsync(int userId)
         {
             return await _context.OrderItems
@@ -52,7 +43,6 @@ namespace QuickServe.Repositories.Implementations
                 .ToListAsync();
         }
 
-        // Add a new OrderItem
         public async Task<OrderItem> AddOrderItemAsync(OrderItem orderItem)
         {
             _context.OrderItems.Add(orderItem);
@@ -60,7 +50,6 @@ namespace QuickServe.Repositories.Implementations
             return orderItem;
         }
 
-        // Update an existing OrderItem
         public async Task<OrderItem> UpdateOrderItemAsync(OrderItem orderItem)
         {
             _context.OrderItems.Update(orderItem);
@@ -68,7 +57,6 @@ namespace QuickServe.Repositories.Implementations
             return orderItem;
         }
 
-        // Delete an OrderItem by ID
         public async Task<bool> DeleteOrderItemAsync(int id)
         {
             var orderItem = await _context.OrderItems.FindAsync(id);
@@ -79,7 +67,6 @@ namespace QuickServe.Repositories.Implementations
             return true;
         }
 
-        // Paginated results for OrderItems by OrderID
         public async Task<IEnumerable<OrderItem>> GetOrderItemsByOrderIdWithPaginationAsync(int orderId, int page, int pageSize)
         {
             return await _context.OrderItems

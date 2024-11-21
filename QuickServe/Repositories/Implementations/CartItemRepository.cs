@@ -20,18 +20,30 @@ namespace QuickServe.Repositories.Implementations
 
         public async Task<CartItem> GetCartItemByIdAsync(int id)
         {
-            var cartItem = await _context.CartItems.FindAsync(id);
+            var cartItem = await _context.CartItems
+                .Where(c => c.CartItemID == id) // Ensure the item is found
+                .FirstOrDefaultAsync();
+
             if (cartItem == null)
             {
                 throw new KeyNotFoundException($"CartItem with ID {id} not found.");
             }
+
             return cartItem;
         }
 
         public async Task<IEnumerable<CartItem>> GetCartItemsByCartIdAsync(int cartId)
         {
             return await _context.CartItems
-                .Where(c => c.CartID == cartId)
+                .Where(c => c.CartID == cartId) // Get items based on CartID
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<CartItem>> GetCartItemsByMenuIdAsync(int menuId)
+        {
+            // Implement method to fetch CartItems based on MenuID
+            return await _context.CartItems
+                .Where(c => c.MenuID == menuId) // Filter by MenuID
                 .ToListAsync();
         }
 

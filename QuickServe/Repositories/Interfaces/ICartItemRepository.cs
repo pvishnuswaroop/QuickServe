@@ -8,6 +8,7 @@ namespace QuickServe.Repositories.Interfaces
     {
         Task<CartItem?> GetCartItemByIdAsync(int id);  // Nullable return type to handle missing items
         Task<IEnumerable<CartItem>> GetCartItemsByCartIdAsync(int cartId);  // Get all items in a specific cart
+        Task<IEnumerable<CartItem>> GetCartItemsByMenuIdAsync(int menuId);
         Task<CartItem> AddCartItemAsync(CartItem cartItem);  // Add a new item to a cart
         Task<CartItem> UpdateCartItemAsync(CartItem cartItem);  // Update an existing cart item
         Task<bool> DeleteCartItemAsync(int id);  // Delete a cart item by ID

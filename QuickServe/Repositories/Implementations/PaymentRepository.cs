@@ -17,27 +17,23 @@ namespace QuickServe.Repositories.Implementations
             _context = context;
         }
 
-        // Get a payment by its ID
         public async Task<Payment?> GetPaymentByIdAsync(int id)
         {
             return await _context.Payments.FindAsync(id);
         }
 
-        // Get all payments
         public async Task<IEnumerable<Payment>> GetAllPaymentsAsync()
         {
             return await _context.Payments.ToListAsync();
         }
 
-        // Get payments for a specific user
         public async Task<IEnumerable<Payment>> GetPaymentsByUserIdAsync(int userId)
         {
             return await _context.Payments
-                .Where(p => p.User.UserID == userId)  // Query by UserID using the User navigation property
+                .Where(p => p.UserID == userId)  // Query by UserID
                 .ToListAsync();
         }
 
-        // Get payments for a specific order
         public async Task<IEnumerable<Payment>> GetPaymentsByOrderIdAsync(int orderId)
         {
             return await _context.Payments
@@ -45,15 +41,13 @@ namespace QuickServe.Repositories.Implementations
                 .ToListAsync();
         }
 
-        // Get payments by status
         public async Task<IEnumerable<Payment>> GetPaymentsByStatusAsync(string status)
         {
             return await _context.Payments
-                .Where(p => p.PaymentStatus == status)  // Fix to use PaymentStatus, not Status
+                .Where(p => p.PaymentStatus == status)
                 .ToListAsync();
         }
 
-        // Get payments within a specific date range
         public async Task<IEnumerable<Payment>> GetPaymentsByDateRangeAsync(DateTime startDate, DateTime endDate)
         {
             return await _context.Payments
@@ -61,7 +55,6 @@ namespace QuickServe.Repositories.Implementations
                 .ToListAsync();
         }
 
-        // Add a new payment
         public async Task<Payment> AddPaymentAsync(Payment payment)
         {
             _context.Payments.Add(payment);
@@ -69,7 +62,6 @@ namespace QuickServe.Repositories.Implementations
             return payment;
         }
 
-        // Update an existing payment
         public async Task<Payment> UpdatePaymentAsync(Payment payment)
         {
             _context.Payments.Update(payment);
@@ -77,7 +69,6 @@ namespace QuickServe.Repositories.Implementations
             return payment;
         }
 
-        // Delete a payment by its ID
         public async Task<bool> DeletePaymentAsync(int id)
         {
             var payment = await _context.Payments.FindAsync(id);
@@ -86,6 +77,14 @@ namespace QuickServe.Repositories.Implementations
             _context.Payments.Remove(payment);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        // New method to filter payments by PaymentMethod
+        public async Task<IEnumerable<Payment>> GetPaymentsByPaymentMethodAsync(PaymentMethodEnum paymentMethod)
+        {
+            return await _context.Payments
+                .Where(p => p.PaymentMethod == paymentMethod)
+                .ToListAsync();
         }
     }
 }

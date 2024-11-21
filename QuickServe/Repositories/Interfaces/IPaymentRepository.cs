@@ -6,7 +6,7 @@ namespace QuickServe.Repositories.Interfaces
 {
     public interface IPaymentRepository
     {
-        Task<Payment?> GetPaymentByIdAsync(int id);  // Use nullable to indicate the payment might not exist
+        Task<Payment?> GetPaymentByIdAsync(int id);  // Nullable to handle non-existent payments
         Task<IEnumerable<Payment>> GetAllPaymentsAsync();
         Task<IEnumerable<Payment>> GetPaymentsByUserIdAsync(int userId);  // Optional: Get payments by user ID
         Task<IEnumerable<Payment>> GetPaymentsByOrderIdAsync(int orderId);  // Optional: Get payments by order ID
@@ -15,5 +15,6 @@ namespace QuickServe.Repositories.Interfaces
         Task<Payment> AddPaymentAsync(Payment payment);
         Task<Payment> UpdatePaymentAsync(Payment payment);
         Task<bool> DeletePaymentAsync(int id);
+        Task<IEnumerable<Payment>> GetPaymentsByPaymentMethodAsync(PaymentMethodEnum paymentMethod);  // New method to filter by PaymentMethod
     }
 }

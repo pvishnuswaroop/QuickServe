@@ -322,8 +322,8 @@ namespace QuickServe.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("Gender")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("Gender")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -336,16 +336,7 @@ namespace QuickServe.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PasswordSalt")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -353,6 +344,9 @@ namespace QuickServe.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("UserID");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });
@@ -362,7 +356,7 @@ namespace QuickServe.Migrations
                     b.HasOne("QuickServe.Models.User", "User")
                         .WithOne("Cart")
                         .HasForeignKey("QuickServe.Models.Cart", "UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -379,7 +373,7 @@ namespace QuickServe.Migrations
                     b.HasOne("QuickServe.Models.Menu", "Menu")
                         .WithMany("CartItems")
                         .HasForeignKey("MenuID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Cart");
@@ -392,7 +386,7 @@ namespace QuickServe.Migrations
                     b.HasOne("QuickServe.Models.Restaurant", "Restaurant")
                         .WithMany("Menus")
                         .HasForeignKey("RestaurantID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Restaurant");
@@ -403,13 +397,13 @@ namespace QuickServe.Migrations
                     b.HasOne("QuickServe.Models.Restaurant", "Restaurant")
                         .WithMany("Orders")
                         .HasForeignKey("RestaurantID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("QuickServe.Models.User", "User")
                         .WithMany("Orders")
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Restaurant");
@@ -422,13 +416,13 @@ namespace QuickServe.Migrations
                     b.HasOne("QuickServe.Models.Menu", "Menu")
                         .WithMany("OrderItems")
                         .HasForeignKey("MenuID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("QuickServe.Models.Order", "Order")
                         .WithMany("OrderItems")
                         .HasForeignKey("OrderID")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Menu");
@@ -447,7 +441,7 @@ namespace QuickServe.Migrations
                     b.HasOne("QuickServe.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Order");
@@ -459,18 +453,19 @@ namespace QuickServe.Migrations
                 {
                     b.HasOne("QuickServe.Models.Order", "Order")
                         .WithMany()
-                        .HasForeignKey("OrderID");
+                        .HasForeignKey("OrderID")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("QuickServe.Models.Restaurant", "Restaurant")
                         .WithMany("Ratings")
                         .HasForeignKey("RestaurantID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("QuickServe.Models.User", "User")
                         .WithMany("Ratings")
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Order");
