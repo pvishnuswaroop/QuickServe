@@ -51,7 +51,6 @@ namespace QuickServe.Repositories.Implementations
             return user;
         }
 
-
         public async Task<User> UpdateUserAsync(User user)
         {
             var existingUser = await _context.Users.FindAsync(user.UserID);

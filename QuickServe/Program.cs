@@ -1,10 +1,11 @@
 using QuickServe.Repositories.Interfaces;
 using QuickServe.Repositories.Implementations;
-using Microsoft.EntityFrameworkCore;
 using QuickServe.Data;
 using QuickServe.Services.Interfaces;
 using QuickServe.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -16,7 +17,6 @@ builder.Services.AddControllers();
 // Register the DbContext with SQL Server connection string
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
 
 // Register IUserRepository and UserRepository
 builder.Services.AddScoped<IUserRepository, UserRepository>();

@@ -50,7 +50,9 @@ namespace QuickServe.Controllers
                     {
                         Email = userDto.Email,
                         Name = userDto.Name,
-                        ContactNumber = userDto.ContactNumber
+                        ContactNumber = userDto.ContactNumber,
+                        Role = request.Role,
+                        PasswordHash = hashedPassword
                     };
 
                     // Generate an access token for the registered user
