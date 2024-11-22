@@ -8,11 +8,10 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
-using QuickServe.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;  // Added logging namespace
+using Microsoft.Extensions.Logging;
 using QuickServe.Data;
-using System.Linq;
+using QuickServe.Services.Interfaces;
 
 namespace QuickServe.Services
 {
@@ -25,7 +24,7 @@ namespace QuickServe.Services
         private readonly IConfiguration _configuration;
         private readonly ILogger<TokenService> _logger;
 
-        // Constructor to inject the IConfiguration, AppDbContext, and ILogger
+        // Constructor to inject dependencies and configuration
         public TokenService(IConfiguration configuration, AppDbContext context, ILogger<TokenService> logger)
         {
             _configuration = configuration;
@@ -38,7 +37,15 @@ namespace QuickServe.Services
             _audience = _configuration["Jwt:Audience"];
         }
 
-        public string GenerateJwtToken(User user)
+        // Generate access token (returns a JWT token)
+        public Task<string> GenerateAccessToken(User user)
+        {
+            var token = GenerateJwtToken(user);  // Delegate to GenerateJwtToken
+            return token; // Return as a Task<string>
+        }
+
+        // Generate JWT token for the user
+        public Task<string> GenerateJwtToken(User user)
         {
             try
             {
@@ -51,7 +58,7 @@ namespace QuickServe.Services
                     new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString())
                 };
 
-                // Add roles to claims if they exist
+                // Add roles to claims if the user has roles
                 if (user.Roles != null)
                 {
                     foreach (var role in user.Roles)
@@ -60,7 +67,7 @@ namespace QuickServe.Services
                     }
                 }
 
-                var expirationMinutes = int.Parse(_configuration["Jwt:ExpirationMinutes"]); // Configurable expiration
+                var expirationMinutes = int.Parse(_configuration["Jwt:ExpirationMinutes"]);
                 var token = new JwtSecurityToken(
                     issuer: _issuer,
                     audience: _audience,
@@ -69,7 +76,8 @@ namespace QuickServe.Services
                     signingCredentials: credentials
                 );
 
-                return new JwtSecurityTokenHandler().WriteToken(token);
+                // Return JWT token as Task<string>
+                return Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));
             }
             catch (Exception ex)
             {
@@ -78,6 +86,7 @@ namespace QuickServe.Services
             }
         }
 
+        // Generate a refresh token
         public string GenerateRefreshToken()
         {
             var randomNumber = new byte[32];
@@ -88,6 +97,7 @@ namespace QuickServe.Services
             return Convert.ToBase64String(randomNumber);
         }
 
+        // Save refresh token to the database
         public async Task SaveRefreshToken(string username, string token)
         {
             try
@@ -109,6 +119,7 @@ namespace QuickServe.Services
             }
         }
 
+        // Retrieve the username associated with the refresh token
         public async Task<string> RetrieveUsernameByRefreshToken(string refreshToken)
         {
             try
@@ -130,6 +141,7 @@ namespace QuickServe.Services
             }
         }
 
+        // Revoke (delete) the refresh token from the database
         public async Task<bool> RevokeRefreshToken(string refreshToken)
         {
             try

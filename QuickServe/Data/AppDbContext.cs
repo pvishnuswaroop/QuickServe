@@ -23,8 +23,9 @@ namespace QuickServe.Data
         {
             base.OnModelCreating(modelBuilder);
 
+
             modelBuilder.Entity<RefreshToken>()
-               .HasKey(rt => rt.Id);
+               .HasIndex(rt => rt.Username);
 
             // Decimal precision configuration for monetary values
             modelBuilder.Entity<Menu>()

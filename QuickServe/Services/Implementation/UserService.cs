@@ -4,7 +4,10 @@ using QuickServe.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using QuickServe.DTO;
+using Microsoft.EntityFrameworkCore;
 
 namespace QuickServe.Services
 {
@@ -12,7 +15,7 @@ namespace QuickServe.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly PasswordHasher<User> _passwordHasher;
-        private readonly ITokenService _tokenService; // Assuming a separate service for generating JWT tokens
+        private readonly ITokenService _tokenService;
 
         public UserService(IUserRepository userRepository, ITokenService tokenService)
         {
@@ -22,72 +25,113 @@ namespace QuickServe.Services
         }
 
         // Register a new user
-        public async Task<User> RegisterUserAsync(string email, string password)
+        public async Task<UserDto> RegisterUserAsync(string email, string password)
         {
-            // Check if the email already exists
-            var existingUser = await _userRepository.GetUserByEmailAsync(email);
-            if (existingUser != null)
-                throw new Exception("User with this email already exists.");
-
-            // Hash the password
-            var hashedPassword = _passwordHasher.HashPassword(null, password);
-
-            // Create the user object
             var user = new User
             {
                 Email = email,
-                PasswordHash = hashedPassword,
-                // You can add more user properties here (like Name, Role, etc.)
+                PasswordHash = _passwordHasher.HashPassword(null, password),
+                Name = "Default Name", // Ensure this is assigned if Name is required
+                ContactNumber = "0000000000", // Temporary placeholder if required
+                Address = "Default Address", // Placeholder if required
+                CreatedAt = DateTime.Now,
+                Role = "Customer"
             };
 
-            // Save user to the database
-            return await _userRepository.AddUserAsync(user);
+            // Save the user using repository
+            await _userRepository.AddUserAsync(user);
+
+            return new UserDto
+            {
+                Id = user.UserID,
+                Email = user.Email,
+                Name = user.Name,
+                ContactNumber = user.ContactNumber
+            };
         }
+
+
 
         // Login the user (authenticate)
         public async Task<string> LoginUserAsync(string email, string password)
         {
-            var user = await _userRepository.GetUserByEmailAsync(email);
+            var user = await _userRepository.GetUserByEmailAsync(email); // Full User object
 
             if (user == null)
-                return null; // User not found
+                return null;
 
-            // Verify password
-            var passwordVerificationResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+            if (result == PasswordVerificationResult.Failed)
+                return null;
 
-            if (passwordVerificationResult == PasswordVerificationResult.Failed)
-                return null; // Invalid password
-
-            // Generate JWT token using a separate service
-            var token = _tokenService.GenerateJwtToken(user); // Assuming a method for generating the JWT
-
-            return token;
+            return await _tokenService.GenerateJwtToken(user);
         }
 
         // Get user by ID
-        public async Task<User> GetUserByIdAsync(int id)
+        public async Task<UserDto> GetUserByIdAsync(int id)
         {
-            return await _userRepository.GetUserByIdAsync(id);
+            var user = await _userRepository.GetUserByIdAsync(id);
+            if (user == null)
+                throw new Exception("User not found");
+
+            // Map User to UserDto
+            return new UserDto
+            {
+                Id = user.UserID,
+                Email = user.Email,
+                Name = user.Name,
+                ContactNumber = user.ContactNumber
+            };
         }
 
         // Get user by email
-        public async Task<User> GetUserByEmailAsync(string email)
+        public async Task<UserDto?> GetUserByEmailAsync(string email)
         {
-            return await _userRepository.GetUserByEmailAsync(email);
+            var user = await _userRepository.GetUserByEmailAsync(email);
+            if (user == null)
+                return null;  // Return null explicitly
+
+            // Map User to UserDto
+            return new UserDto
+            {
+                Id = user.UserID,
+                Email = user.Email,
+                Name = user.Name,
+                ContactNumber = user.ContactNumber
+            };
         }
 
         // Get all users (admin functionality)
-        public async Task<IEnumerable<User>> GetAllUsersAsync()
+        public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
-            return await _userRepository.GetAllUsersAsync();
+            var users = await _userRepository.GetAllUsersAsync();
+
+            // Map each User to UserDto
+            return users.Select(user => new UserDto
+            {
+                Id = user.UserID,
+                Email = user.Email,
+                Name = user.Name,
+                ContactNumber = user.ContactNumber
+            });
         }
 
         // Update user information
-        public async Task<User> UpdateUserAsync(User user)
+        public async Task<UserDto> UpdateUserAsync(User user)
         {
             // Update user in the database
-            return await _userRepository.UpdateUserAsync(user);
+            var updatedUser = await _userRepository.UpdateUserAsync(user);
+
+            // Map User to UserDto
+            return new UserDto
+            {
+                Id = updatedUser.UserID,
+                Email = updatedUser.Email,
+                Name = updatedUser.Name,
+                ContactNumber = updatedUser.ContactNumber
+            };
         }
+
 
         // Delete user
         public async Task<bool> DeleteUserAsync(int id)

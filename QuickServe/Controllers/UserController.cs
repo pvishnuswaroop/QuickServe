@@ -1,44 +1,104 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using QuickServe.Services.Interfaces; // If using services for logic
-using QuickServe.Data;  // For accessing the database context
-using QuickServe.Models; // Your models namespace
+using QuickServe.Services.Interfaces;
+using QuickServe.DTO;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using QuickServe.Models;
 
 namespace QuickServe.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsersController : ControllerBase
+    public class UserController : ControllerBase
     {
-        private readonly AppDbContext _context; // Injecting the DbContext
+        private readonly IUserService _userService;
 
-        public UsersController(AppDbContext context)
+        public UserController(IUserService userService)
         {
-            _context = context;
+            _userService = userService;
         }
 
-        // GET api/users
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
-        {
-            // Retrieve all users from the database
-            var users = await _context.Users.ToListAsync();
-            return Ok(users); // Return the list of users as a response
-        }
-
-        // GET api/users/5
+        // Get a user by ID
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        public async Task<IActionResult> GetUserById(int id)
         {
-            // Retrieve a specific user by ID
-            var user = await _context.Users.FindAsync(id);
-
-            if (user == null)
+            try
             {
-                return NotFound(); // Return 404 if the user is not found
-            }
+                var user = await _userService.GetUserByIdAsync(id);
+                if (user == null)
+                    return NotFound("User not found.");
 
-            return Ok(user); // Return the user data
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        // Get all users (admin functionality)
+        [HttpGet]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            try
+            {
+                var users = await _userService.GetAllUsersAsync();
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
+        {
+            if (id != request.Id)
+
+                    return BadRequest("User ID mismatch.");
+
+            try
+            {
+                // Map UpdateUserRequest to User model
+                var user = new User
+                {
+                    UserID = request.Id,
+                    Email = request.Email,
+                    Name = request.Name,
+                    ContactNumber = request.ContactNumber
+                };
+
+                // Call the service to update the user
+                var updatedUser = await _userService.UpdateUserAsync(user);
+
+                // Return the updated user information as UserDto
+                return Ok(updatedUser);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
+        // Delete user
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            try
+            {
+                var result = await _userService.DeleteUserAsync(id);
+                if (!result)
+                    return NotFound("User not found.");
+
+                return Ok("User deleted.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
     }
 }

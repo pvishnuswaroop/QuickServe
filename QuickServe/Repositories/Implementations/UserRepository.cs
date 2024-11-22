@@ -45,11 +45,12 @@ namespace QuickServe.Repositories.Implementations
 
         public async Task<User> AddUserAsync(User user)
         {
-            user.PasswordHash = _passwordHasher.HashPassword(user, user.PasswordHash); // Hash the password
+            // Password is already hashed, so we just save it.
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             return user;
         }
+
 
         public async Task<User> UpdateUserAsync(User user)
         {
