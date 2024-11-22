@@ -48,17 +48,27 @@ namespace QuickServe.Services
         {
             try
             {
+                if (user == null)
+                {
+                    throw new ArgumentNullException(nameof(user), "User object cannot be null.");
+                }
+
+                if (string.IsNullOrEmpty(user.Role))
+                {
+                    throw new ArgumentException("User role is required.", nameof(user.Role));
+                }
+
                 var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSecretKey));
                 var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
                 var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, user.Email),
-                    new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
-                    new Claim(ClaimTypes.Role, user.Role)
-                };
+        {
+            new Claim(ClaimTypes.Name, user.Email),
+            new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
+            new Claim(ClaimTypes.Role, user.Role ?? "DefaultRole")  // Ensure a default role if none is provided
+        };
 
-                // Add roles to claims if the user has roles
+                // Add roles to claims if the user has additional roles
                 if (user.Roles != null && user.Roles.Any())
                 {
                     foreach (var role in user.Roles)
@@ -87,6 +97,7 @@ namespace QuickServe.Services
                 throw new ApplicationException("An error occurred while generating the token.", ex);
             }
         }
+
 
         // Generate a refresh token
         public string GenerateRefreshToken()
