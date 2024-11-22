@@ -38,14 +38,13 @@ namespace QuickServe.Services
         }
 
         // Generate access token (returns a JWT token)
-        public Task<string> GenerateAccessToken(User user)
+        public async Task<string> GenerateAccessToken(User user)
         {
-            var token = GenerateJwtToken(user);  // Delegate to GenerateJwtToken
-            return token; // Return as a Task<string>
+            return await GenerateJwtToken(user);  // Delegate to GenerateJwtToken
         }
 
         // Generate JWT token for the user
-        public Task<string> GenerateJwtToken(User user)
+        public async Task<string> GenerateJwtToken(User user)
         {
             try
             {
@@ -55,11 +54,12 @@ namespace QuickServe.Services
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.Email),
-                    new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString())
+                    new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
+                    new Claim(ClaimTypes.Role, user.Role)
                 };
 
                 // Add roles to claims if the user has roles
-                if (user.Roles != null)
+                if (user.Roles != null && user.Roles.Any())
                 {
                     foreach (var role in user.Roles)
                     {
@@ -67,7 +67,9 @@ namespace QuickServe.Services
                     }
                 }
 
-                var expirationMinutes = int.Parse(_configuration["Jwt:ExpirationMinutes"]);
+                // Get expiration time from the configuration (default to 60 minutes if not set)
+                var expirationMinutes = _configuration.GetValue<int>("Jwt:ExpirationMinutes", 60);
+
                 var token = new JwtSecurityToken(
                     issuer: _issuer,
                     audience: _audience,
@@ -76,8 +78,8 @@ namespace QuickServe.Services
                     signingCredentials: credentials
                 );
 
-                // Return JWT token as Task<string>
-                return Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));
+                // Return JWT token
+                return new JwtSecurityTokenHandler().WriteToken(token);
             }
             catch (Exception ex)
             {
@@ -102,6 +104,11 @@ namespace QuickServe.Services
         {
             try
             {
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(token))
+                {
+                    throw new ArgumentException("Username or token cannot be null or empty.");
+                }
+
                 var refreshToken = new RefreshToken
                 {
                     Username = username,
@@ -111,6 +118,12 @@ namespace QuickServe.Services
 
                 await _context.RefreshTokens.AddAsync(refreshToken);
                 await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, "Database update error occurred while saving refresh token.");
+                _logger.LogError(dbEx.InnerException?.Message); // Log the inner exception
+                throw new ApplicationException("An error occurred while saving the refresh token.", dbEx);
             }
             catch (Exception ex)
             {

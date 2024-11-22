@@ -17,6 +17,7 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
 // Register IUserRepository and UserRepository
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 

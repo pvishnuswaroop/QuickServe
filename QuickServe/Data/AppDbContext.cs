@@ -22,7 +22,11 @@ namespace QuickServe.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<RefreshToken>().ToTable("RefreshTokens");
 
+            modelBuilder.Entity<User>()
+            .Property(u => u.Roles)
+            .IsRequired(false); // Mark the Roles collection as optional
 
             modelBuilder.Entity<RefreshToken>()
                .HasIndex(rt => rt.Username);

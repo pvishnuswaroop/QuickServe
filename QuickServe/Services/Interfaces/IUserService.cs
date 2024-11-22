@@ -7,7 +7,8 @@ namespace QuickServe.Services.Interfaces
 {
     public interface IUserService
     {
-        Task<UserDto> RegisterUserAsync(string email, string password);
+        Task<UserDto> RegisterUserAsync(string email, string passwordHash, string role);
+
         Task<string> LoginUserAsync(string email, string password);
         Task<UserDto> GetUserByIdAsync(int id);
         Task<UserDto> GetUserByEmailAsync(string email);

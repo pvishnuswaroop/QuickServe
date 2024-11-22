@@ -8,7 +8,7 @@ namespace QuickServe.Services.Interfaces
         Task<string> GenerateJwtToken(User user);         // Method to generate JWT token.
         Task<string> GenerateAccessToken(User user);     // Method to generate access token (you can use GenerateJwtToken here).
         string GenerateRefreshToken();                    // Method to generate a refresh token.
-        Task SaveRefreshToken(string username, string token);  // Method to save the refresh token in the database.
+        Task SaveRefreshToken(string username, string refreshToken);  // Method to save the refresh token in the database.
         Task<string> RetrieveUsernameByRefreshToken(string refreshToken);  // Method to retrieve the username by refresh token.
         Task<bool> RevokeRefreshToken(string refreshToken);  // Method to revoke (delete) the refresh token.
     }

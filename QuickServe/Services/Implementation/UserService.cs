@@ -17,6 +17,7 @@ namespace QuickServe.Services
         private readonly PasswordHasher<User> _passwordHasher;
         private readonly ITokenService _tokenService;
 
+        // Constructor injects the necessary services
         public UserService(IUserRepository userRepository, ITokenService tokenService)
         {
             _userRepository = userRepository;
@@ -25,22 +26,33 @@ namespace QuickServe.Services
         }
 
         // Register a new user
-        public async Task<UserDto> RegisterUserAsync(string email, string password)
+        public async Task<UserDto> RegisterUserAsync(string email, string password, string role = "Customer")
         {
+            // Check if the user already exists
+            var existingUser = await _userRepository.GetUserByEmailAsync(email);
+            if (existingUser != null)
+                throw new Exception("User with this email already exists.");
+
+            // Hash the password
+            var hashedPassword = _passwordHasher.HashPassword(new User(), password);
+
+            // Create a new User object and set the hashed password
             var user = new User
             {
                 Email = email,
-                PasswordHash = _passwordHasher.HashPassword(null, password),
-                Name = "Default Name", // Ensure this is assigned if Name is required
-                ContactNumber = "0000000000", // Temporary placeholder if required
-                Address = "Default Address", // Placeholder if required
-                CreatedAt = DateTime.Now,
-                Role = "Customer"
+                PasswordHash = _passwordHasher.HashPassword(null, password),   // Correctly set the hashed password
+                Name = "Default Name",          // Default name, can be customized
+                ContactNumber = "0000000000",   // Default number, can be updated later
+                Address = "Default Address",    // Default address
+                CreatedAt = DateTime.Now,       // Set the creation timestamp
+                Role = role,                    // Role passed to the method
+                Roles = new List<string> { role } // Set roles for the user
             };
 
-            // Save the user using repository
+            // Save the user using the repository
             await _userRepository.AddUserAsync(user);
 
+            // Return the user data (UserDto)
             return new UserDto
             {
                 Id = user.UserID,
@@ -51,14 +63,16 @@ namespace QuickServe.Services
         }
 
 
-
         // Login the user (authenticate)
         public async Task<string> LoginUserAsync(string email, string password)
         {
-            var user = await _userRepository.GetUserByEmailAsync(email); // Full User object
+            var user = await _userRepository.GetUserByEmailAsync(email);
 
             if (user == null)
                 return null;
+
+            // Log to check the PasswordHash value
+            Console.WriteLine($"Password Hash: {user.PasswordHash}");
 
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
             if (result == PasswordVerificationResult.Failed)
@@ -67,6 +81,7 @@ namespace QuickServe.Services
             return await _tokenService.GenerateJwtToken(user);
         }
 
+
         // Get user by ID
         public async Task<UserDto> GetUserByIdAsync(int id)
         {
@@ -74,7 +89,6 @@ namespace QuickServe.Services
             if (user == null)
                 throw new Exception("User not found");
 
-            // Map User to UserDto
             return new UserDto
             {
                 Id = user.UserID,
@@ -89,9 +103,8 @@ namespace QuickServe.Services
         {
             var user = await _userRepository.GetUserByEmailAsync(email);
             if (user == null)
-                return null;  // Return null explicitly
+                return null;
 
-            // Map User to UserDto
             return new UserDto
             {
                 Id = user.UserID,
@@ -106,7 +119,6 @@ namespace QuickServe.Services
         {
             var users = await _userRepository.GetAllUsersAsync();
 
-            // Map each User to UserDto
             return users.Select(user => new UserDto
             {
                 Id = user.UserID,
@@ -119,10 +131,8 @@ namespace QuickServe.Services
         // Update user information
         public async Task<UserDto> UpdateUserAsync(User user)
         {
-            // Update user in the database
             var updatedUser = await _userRepository.UpdateUserAsync(user);
 
-            // Map User to UserDto
             return new UserDto
             {
                 Id = updatedUser.UserID,
@@ -131,7 +141,6 @@ namespace QuickServe.Services
                 ContactNumber = updatedUser.ContactNumber
             };
         }
-
 
         // Delete user
         public async Task<bool> DeleteUserAsync(int id)

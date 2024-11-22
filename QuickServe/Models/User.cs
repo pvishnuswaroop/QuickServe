@@ -64,7 +64,7 @@ namespace QuickServe.Models
         [Required]
         public string Role { get; set; }
 
-        public List<string> Roles { get; set; }
+        public ICollection<string> Roles { get; set; } = new List<string>();
 
         // Password validation using hashed password comparison
         public bool ValidatePassword(string inputPassword)

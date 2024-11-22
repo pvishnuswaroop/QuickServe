@@ -12,165 +12,168 @@ using System.Text;
 
 namespace QuickServe.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AuthController : ControllerBase
+    namespace QuickServe.Controllers
     {
-        private readonly IUserService _userService;
-        private readonly ITokenService _tokenService;
-        private readonly PasswordHasher<User> _passwordHasher;
-
-        public AuthController(IUserService userService, ITokenService tokenService)
+        [Route("api/[controller]")]
+        [ApiController]
+        public class AuthController : ControllerBase
         {
-            _userService = userService;
-            _tokenService = tokenService;
-            _passwordHasher = new PasswordHasher<User>();
-        }
+            private readonly IUserService _userService;
+            private readonly ITokenService _tokenService;
+            private readonly PasswordHasher<User> _passwordHasher;
+            private readonly ILogger<AuthController> _logger;
 
-        [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] Register request)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest("Invalid request body.");
-
-            try
+            public AuthController(IUserService userService, ITokenService tokenService, ILogger<AuthController> logger)
             {
-                // Assuming RegisterUserAsync returns a UserDto
-                var hashedPassword = _passwordHasher.HashPassword(new User(), request.Password);
-                var userDto = await _userService.RegisterUserAsync(request.Email, hashedPassword);
+                _userService = userService;
+                _tokenService = tokenService;
+                _passwordHasher = new PasswordHasher<User>();
+                _logger = logger;
+            }
 
+            [HttpPost("Register")]
+            public async Task<IActionResult> Register([FromBody] Register request)
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest("Invalid request body.");
 
-                // Create the User model from UserDto
-                var user = new User
+                try
                 {
-                    Email = userDto.Email,
-                    Name = userDto.Name,
-                    ContactNumber = userDto.ContactNumber
-                    // Do not assign PasswordHash, it's already handled in RegisterUserAsync
-                };
+                    // Hash the password before saving
+                    var hashedPassword = _passwordHasher.HashPassword(new User(), request.Password);
 
-                // Now you can pass the User model to the relevant method
-                var accessToken = _tokenService.GenerateAccessToken(user);
+                    // Call the RegisterUserAsync method with email, hashed password, and role
+                    var userDto = await _userService.RegisterUserAsync(request.Email, hashedPassword, request.Role);
 
-                return Ok(new { AccessToken = accessToken });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
+                    // Map the returned UserDto to a User entity
+                    var user = new User
+                    {
+                        Email = userDto.Email,
+                        Name = userDto.Name,
+                        ContactNumber = userDto.ContactNumber
+                    };
 
+                    // Generate an access token for the registered user
+                    var accessToken = _tokenService.GenerateAccessToken(user);
 
-        [HttpPost("Login")]
-        public async Task<IActionResult> Login([FromBody] Login request)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest("Invalid request body.");
-            }
-
-            try
-            {
-                // Assuming GetUserByEmailAsync returns a UserDto
-                var userDto = await _userService.GetUserByEmailAsync(request.Email);
-
-                if (userDto == null)
+                    return Ok(new { AccessToken = accessToken });
+                }
+                catch (Exception ex)
                 {
-                    return Unauthorized("Invalid user credentials.");
+                    _logger.LogError(ex, "An error occurred during user registration.");
+                    return StatusCode(500, $"Internal server error: {ex.Message}");
+                }
+            }
+
+            [HttpPost("Login")]
+            public async Task<IActionResult> Login([FromBody] Login request)
+            {
+                if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("Invalid request: " + string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                    return BadRequest("Invalid request body.");
                 }
 
-                // Manually map UserDto to User (or directly modify GetUserByEmailAsync to return a User)
-                var user = new User
+                try
                 {
-                    UserID = userDto.Id,
-                    Email = userDto.Email,
-                    Name = userDto.Name,
-                    ContactNumber = userDto.ContactNumber,
-                    PasswordHash = userDto.PasswordHash // If password hash is already stored in the DTO
-                };
+                    var userDto = await _userService.GetUserByEmailAsync(request.Email);
+                    if (userDto == null)
+                        return Unauthorized("Invalid user credentials.");
 
-                // Verify the password using the hashed password
-                if (!_passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password).Equals(PasswordVerificationResult.Success))
-                {
-                    return Unauthorized("Invalid user credentials.");
+                    // Log the password hash to verify it's being retrieved correctly
+                    _logger.LogInformation($"Retrieved PasswordHash for {request.Email}: {userDto.PasswordHash}");
+
+                    // Check if password hash exists
+                    if (string.IsNullOrEmpty(userDto.PasswordHash))
+                        return Unauthorized("Password hash not found.");
+
+                    var user = new User
+                    {
+                        UserID = userDto.Id,
+                        Email = userDto.Email,
+                        Name = userDto.Name,
+                        ContactNumber = userDto.ContactNumber,
+                        PasswordHash = userDto.PasswordHash
+                    };
+
+                    if (_passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password) != PasswordVerificationResult.Success)
+                        return Unauthorized("Invalid user credentials.");
+
+                    var accessToken = await _tokenService.GenerateAccessToken(user);
+                    var refreshToken = _tokenService.GenerateRefreshToken();
+
+                    await _tokenService.SaveRefreshToken(user.Email, refreshToken);
+
+                    return Ok(new { AccessToken = accessToken, RefreshToken = refreshToken });
                 }
-
-                // Issue access and refresh tokens
-                var accessToken = _tokenService.GenerateAccessToken(user); // Now passing the User model
-                var refreshToken = _tokenService.GenerateRefreshToken();
-
-                // Save refresh token for the user
-                await _tokenService.SaveRefreshToken(user.Email, refreshToken);
-
-                return Ok(new { AccessToken = accessToken, RefreshToken = refreshToken });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpPost("RefreshToken")]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
-        {
-            if (request == null || string.IsNullOrWhiteSpace(request.RefreshToken))
-                return BadRequest("Refresh token is required.");
-
-            try
-            {
-                var username = await _tokenService.RetrieveUsernameByRefreshToken(request.RefreshToken);
-                if (string.IsNullOrEmpty(username))
-                    return Unauthorized("Invalid refresh token.");
-
-                // Assuming GetUserByEmailAsync returns a UserDto
-                var userDto = await _userService.GetUserByEmailAsync(username);
-                if (userDto == null)
-                    return Unauthorized("Invalid user.");
-
-                // Map UserDto to User model
-                var user = new User
+                catch (Exception ex)
                 {
-                    UserID = userDto.Id,
-                    Email = userDto.Email,
-                    Name = userDto.Name,
-                    ContactNumber = userDto.ContactNumber,
-                    PasswordHash = userDto.PasswordHash // If PasswordHash is part of the DTO
-                };
-
-                // Generate new access token and refresh token
-                var accessToken = _tokenService.GenerateAccessToken(user); // Now passing the User model
-                var newRefreshToken = _tokenService.GenerateRefreshToken();
-                await _tokenService.SaveRefreshToken(user.Email, newRefreshToken);
-
-                return Ok(new { AccessToken = accessToken, RefreshToken = newRefreshToken });
+                    _logger.LogError(ex, "An error occurred during login.");
+                    return StatusCode(500, $"Internal server error: {ex.Message}");
+                }
             }
-            catch (Exception ex)
+
+
+
+            [HttpPost("RefreshToken")]
+            public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                if (request == null || string.IsNullOrWhiteSpace(request.RefreshToken))
+                    return BadRequest("Refresh token is required.");
+
+                try
+                {
+                    var username = await _tokenService.RetrieveUsernameByRefreshToken(request.RefreshToken);
+                    if (string.IsNullOrEmpty(username))
+                        return Unauthorized("Invalid refresh token.");
+
+                    var userDto = await _userService.GetUserByEmailAsync(username);
+                    if (userDto == null)
+                        return Unauthorized("Invalid user.");
+
+                    var user = new User
+                    {
+                        UserID = userDto.Id,
+                        Email = userDto.Email,
+                        Name = userDto.Name,
+                        ContactNumber = userDto.ContactNumber,
+                        PasswordHash = userDto.PasswordHash
+                    };
+
+                    var accessToken = await _tokenService.GenerateAccessToken(user);
+                    var newRefreshToken = _tokenService.GenerateRefreshToken();
+                    await _tokenService.SaveRefreshToken(user.Email, newRefreshToken);
+
+                    return Ok(new { AccessToken = accessToken, RefreshToken = newRefreshToken });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "An error occurred during token refresh.");
+                    return StatusCode(500, $"Internal server error: {ex.Message}");
+                }
             }
-        }
 
-
-
-        // Revoke the refresh token
-        [HttpPost("RevokeToken")]
-        public async Task<IActionResult> RevokeToken([FromBody] RefreshTokenRequest request)
-        {
-            if (request == null || string.IsNullOrWhiteSpace(request.RefreshToken))
-                return BadRequest("Refresh token is required.");
-
-            try
+            [HttpPost("RevokeToken")]
+            public async Task<IActionResult> RevokeToken([FromBody] RefreshTokenRequest request)
             {
-                var result = await _tokenService.RevokeRefreshToken(request.RefreshToken);
-                if (!result)
-                    return NotFound("Refresh token not found.");
+                if (request == null || string.IsNullOrWhiteSpace(request.RefreshToken))
+                    return BadRequest("Refresh token is required.");
 
-                return Ok("Token revoked.");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                try
+                {
+                    var result = await _tokenService.RevokeRefreshToken(request.RefreshToken);
+                    if (!result)
+                        return NotFound("Refresh token not found.");
+
+                    return Ok("Token revoked.");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "An error occurred during token revocation.");
+                    return StatusCode(500, $"Internal server error: {ex.Message}");
+                }
             }
         }
     }
 }
+
