@@ -1,28 +1,31 @@
 ﻿using QuickServe.Models;
 using QuickServe.Repositories.Interfaces;
 using QuickServe.Services.Interfaces;
-using Microsoft.AspNetCore.Identity;
+using BCrypt.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using QuickServe.DTO;
-using Microsoft.EntityFrameworkCore;
 
 namespace QuickServe.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-        private readonly PasswordHasher<User> _passwordHasher;
         private readonly ITokenService _tokenService;
 
         // Constructor injects the necessary services
         public UserService(IUserRepository userRepository, ITokenService tokenService)
         {
             _userRepository = userRepository;
-            _passwordHasher = new PasswordHasher<User>();
             _tokenService = tokenService;
+        }
+
+        // Hash the password using BCrypt
+        public string HashPassword(string password)
+        {
+            return BCrypt.Net.BCrypt.HashPassword(password);
         }
 
         // Register a new user
@@ -34,17 +37,17 @@ namespace QuickServe.Services
                 throw new Exception("User with this email already exists.");
 
             // Hash the password
-            var hashedPassword = _passwordHasher.HashPassword(new User(), password);
+            var hashedPassword = HashPassword(password);
 
             // Create a new User object and set the hashed password
             var user = new User
             {
                 Email = email,
-                PasswordHash = _passwordHasher.HashPassword(null, password),   // Correctly set the hashed password
-                Name = "Default Name",          // Default name, can be customized
-                ContactNumber = "0000000000",   // Default number, can be updated later
+                PasswordHash = hashedPassword,  // Use hashed password
+                Name = "Default Name",          // Default name
+                ContactNumber = "0000000000",   // Default contact number
                 Address = "Default Address",    // Default address
-                CreatedAt = DateTime.Now,       // Set the creation timestamp
+                CreatedAt = DateTime.Now,       // Creation timestamp
                 Role = role,                    // Role passed to the method
                 Roles = new List<string> { role } // Set roles for the user
             };
@@ -62,21 +65,17 @@ namespace QuickServe.Services
             };
         }
 
-
         // Login the user (authenticate)
+        
         public async Task<string> LoginUserAsync(string email, string password)
         {
             var user = await _userRepository.GetUserByEmailAsync(email);
 
             if (user == null)
-                return null;
+                return "User not found";  // More descriptive message
 
-            // Log to check the PasswordHash value
-            Console.WriteLine($"Password Hash: {user.PasswordHash}");
-
-            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
-            if (result == PasswordVerificationResult.Failed)
-                return null;
+            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+                return "Invalid password";  // More descriptive message
 
             return await _tokenService.GenerateJwtToken(user);
         }

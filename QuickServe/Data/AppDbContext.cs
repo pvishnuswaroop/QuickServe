@@ -28,8 +28,14 @@ namespace QuickServe.Data
             .Property(u => u.Roles)
             .IsRequired(false); // Mark the Roles collection as optional
 
+
             modelBuilder.Entity<RefreshToken>()
                .HasIndex(rt => rt.Username);
+
+            modelBuilder.Entity<User>()
+    .Property(u => u.Role)
+    .HasConversion<string>();
+
 
             // Decimal precision configuration for monetary values
             modelBuilder.Entity<Menu>()
